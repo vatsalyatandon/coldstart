@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# Intentionally non-runnable placeholders. A human must choose values that
+# make the requested KV-cache allocation exceed the selected GPU's capacity.
+# Keep the placeholder scalars quoted when substituting numeric values.
+patches:
+  - target:
+      kind: Deployment
+      name: inference-server
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: inference-server
+      spec:
+        template:
+          spec:
+            containers:
+              - name: inference
+                args:
+                  - --model
+                  - Qwen/Qwen2.5-7B-Instruct
+                  - --host
+                  - 0.0.0.0
+                  - --port
+                  - "8000"
+                  - --max-model-len
+                  - "REPLACE_ME_OVERSIZED_MAX_MODEL_LEN"
+                  - --gpu-memory-utilization
+                  - "REPLACE_ME_HIGH_GPU_MEMORY_UTILIZATION"

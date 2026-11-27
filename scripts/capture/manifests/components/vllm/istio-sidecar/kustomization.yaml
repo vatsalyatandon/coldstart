@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# Injection-only: the mesh webhook supplies any required sidecar image.
+patches:
+  - target:
+      kind: Deployment
+      name: inference-server
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: inference-server
+      spec:
+        template:
+          metadata:
+            annotations:
+              sidecar.istio.io/inject: "true"

@@ -5,3 +5,4 @@
 coverage.out
 .DS_Store
 /SPEC.md
+/scripts/capture/out/
