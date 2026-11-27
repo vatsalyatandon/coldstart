@@ -88,6 +88,19 @@ func TestRenderJSONUsesStableReportSchema(t *testing.T) {
 	}
 }
 
+func TestEngineContainerChoiceIsRendered(t *testing.T) {
+	report := sampleReport()
+	report.Engine.Container = "engine"
+	report.Engine.ContainerSource = "detected"
+	var out bytes.Buffer
+	if err := Render(context.Background(), &out, report, FormatText); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out.String(), "engine_container: engine (detected)") {
+		t.Fatalf("missing engine-container choice:\n%s", out.String())
+	}
+}
+
 func TestHTMLIsSelfContainedInteractiveAndAccessible(t *testing.T) {
 	report := sampleReport()
 	report.Findings[0].Text = `<script>alert("unsafe")</script>`
@@ -199,5 +212,78 @@ func TestRenderRejectsUnsupportedAndCanceledRequests(t *testing.T) {
 	cancel()
 	if err := Render(ctx, &out, sampleReport(), FormatText); !errors.Is(err, context.Canceled) {
 		t.Fatalf("canceled Render error = %v, want context.Canceled", err)
+	}
+}
+
+func TestRenderRanksFindingsByConfidenceWeightedRecoverableSeconds(t *testing.T) {
+	report := sampleReport()
+	report.Findings = []model.Finding{
+		{
+			Phase: "torch_compile", ObservedSecs: 120, Condition: "large compile phase",
+			Recommendation: "Use eager mode", EstRecoverableSecs: 120, Confidence: "low",
+			Tradeoff: "lower throughput", Text: "Eager mode removes compilation",
+		},
+		{
+			Phase: "torch_compile", ObservedSecs: 120, Condition: "compile cache miss",
+			Recommendation: "Persist the compile cache", EstRecoverableSecs: 84, Confidence: "high",
+			Text: "Persist the compile cache",
+		},
+	}
+	for _, format := range []string{FormatText, FormatMarkdown, FormatHTML} {
+		t.Run(format, func(t *testing.T) {
+			var out bytes.Buffer
+			if err := Render(context.Background(), &out, report, format); err != nil {
+				t.Fatalf("Render(%s): %v", format, err)
+			}
+			got := out.String()
+			cacheIndex := strings.Index(got, "Persist the compile cache")
+			eagerIndex := strings.Index(got, "Eager mode removes compilation")
+			if cacheIndex < 0 || eagerIndex < 0 || cacheIndex > eagerIndex {
+				t.Fatalf("cache miss did not rank above eager mode:\n%s", got)
+			}
+			if count := strings.Count(got, "(trade-off: lower throughput)"); count != 1 {
+				t.Fatalf("trade-off suffix count = %d, want 1:\n%s", count, got)
+			}
+		})
+	}
+}
+
+func TestRenderDoesNotDuplicateTradeoffSuffix(t *testing.T) {
+	report := sampleReport()
+	report.Findings = []model.Finding{{
+		Phase: "torch_compile", Text: "Use eager mode (trade-off: lower throughput)",
+		Tradeoff: "lower throughput", Confidence: "low",
+	}}
+	for _, format := range []string{FormatText, FormatMarkdown, FormatHTML} {
+		t.Run(format, func(t *testing.T) {
+			var out bytes.Buffer
+			if err := Render(context.Background(), &out, report, format); err != nil {
+				t.Fatalf("Render(%s): %v", format, err)
+			}
+			if count := strings.Count(out.String(), "(trade-off: lower throughput)"); count != 1 {
+				t.Fatalf("trade-off suffix count = %d, want 1:\n%s", count, out.String())
+			}
+		})
+	}
+}
+
+func TestRenderJSONIncludesTradeoffOnlyWhenPresent(t *testing.T) {
+	report := sampleReport()
+	report.Findings = []model.Finding{{Phase: "torch_compile", Tradeoff: "lower throughput"}}
+	var out bytes.Buffer
+	if err := Render(context.Background(), &out, report, FormatJSON); err != nil {
+		t.Fatalf("Render(json): %v", err)
+	}
+	if !strings.Contains(out.String(), `"tradeoff": "lower throughput"`) {
+		t.Fatalf("JSON omitted tradeoff metadata:\n%s", out.String())
+	}
+
+	report.Findings[0].Tradeoff = ""
+	out.Reset()
+	if err := Render(context.Background(), &out, report, FormatJSON); err != nil {
+		t.Fatalf("Render(json): %v", err)
+	}
+	if strings.Contains(out.String(), `"tradeoff"`) {
+		t.Fatalf("JSON included empty tradeoff metadata:\n%s", out.String())
 	}
 }

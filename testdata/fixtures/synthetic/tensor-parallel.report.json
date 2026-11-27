@@ -3,8 +3,9 @@
   "pod": "inference/qwen3",
   "engine": {
     "name": "vllm",
-    "version": "0.10.1.1",
+    "version": "0.30.0",
     "container": "engine",
+    "containerSource": "detected",
     "rulePack": "embedded/vllm/ge0.11-lt0.40.yaml"
   },
   "hardware": {
@@ -31,8 +32,8 @@
       "id": "unattributed",
       "name": "unattributed",
       "start": "2026-11-27T02:41:19Z",
-      "end": "2026-11-27T02:41:39Z",
-      "secs": 20,
+      "end": "2026-11-27T02:41:24.9Z",
+      "secs": 5.9,
       "source": "gap",
       "confidence": "low",
       "attrs": {
@@ -42,22 +43,23 @@
     {
       "id": "weights_load",
       "name": "weights load",
-      "start": "2026-11-27T02:41:39Z",
-      "end": "2026-11-27T02:42:09Z",
-      "secs": 30,
+      "start": "2026-11-27T02:41:24.9Z",
+      "end": "2026-11-27T02:42:10Z",
+      "secs": 45.1,
       "source": "log",
       "confidence": "high",
       "attrs": {
-        "engine_reported_secs": 30,
-        "storage": ""
+        "engine_reported_secs": 45.1,
+        "storage": "",
+        "timestamp_secs": 31
       }
     },
     {
       "id": "torch_compile",
       "name": "torch.compile",
-      "start": "2026-11-27T02:42:09Z",
+      "start": "2026-11-27T02:42:10Z",
       "end": "2026-11-27T02:42:39Z",
-      "secs": 30,
+      "secs": 29,
       "source": "log",
       "confidence": "high",
       "attrs": {
@@ -128,8 +130,8 @@
           "id": "unattributed",
           "name": "unattributed",
           "start": "2026-11-27T02:41:19Z",
-          "end": "2026-11-27T02:41:39Z",
-          "secs": 20,
+          "end": "2026-11-27T02:41:24.9Z",
+          "secs": 5.9,
           "source": "gap",
           "confidence": "low",
           "attrs": {
@@ -139,22 +141,23 @@
         {
           "id": "weights_load",
           "name": "weights load",
-          "start": "2026-11-27T02:41:39Z",
-          "end": "2026-11-27T02:42:09Z",
-          "secs": 30,
+          "start": "2026-11-27T02:41:24.9Z",
+          "end": "2026-11-27T02:42:10Z",
+          "secs": 45.1,
           "source": "log",
           "confidence": "high",
           "attrs": {
-            "engine_reported_secs": 30,
-            "storage": ""
+            "engine_reported_secs": 45.1,
+            "storage": "",
+            "timestamp_secs": 31
           }
         },
         {
           "id": "torch_compile",
           "name": "torch.compile",
-          "start": "2026-11-27T02:42:09Z",
+          "start": "2026-11-27T02:42:10Z",
           "end": "2026-11-27T02:42:39Z",
-          "secs": 30,
+          "secs": 29,
           "source": "log",
           "confidence": "high",
           "attrs": {
@@ -207,7 +210,7 @@
       ]
     }
   ],
-  "unattributedSecs": 20,
+  "unattributedSecs": 5.9,
   "findings": [
     {
       "phase": "readiness_lag",
@@ -220,13 +223,12 @@
     }
   ],
   "warnings": [
-    "could not parse vllm version \"0.10.1.1\"; used embedded/vllm/ge0.11-lt0.40.yaml rules"
+    "overlapping markers clamped in torch_compile phase"
   ],
   "rulePack": {
     "engine": "vllm",
     "version": "\u003e=0.11,\u003c0.40",
-    "path": "embedded/vllm/ge0.11-lt0.40.yaml",
-    "warning": "could not parse vllm version \"0.10.1.1\"; used embedded/vllm/ge0.11-lt0.40.yaml rules"
+    "path": "embedded/vllm/ge0.11-lt0.40.yaml"
   },
   "capturedAt": "2026-11-27T02:44:29Z"
 }

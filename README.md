@@ -98,6 +98,7 @@ Useful flags:
 --container <name>          Override engine-container detection
 --rules <dir>               Add custom YAML rule packs
 --probe-prompt "<text>"     Prompt for the optional first-token probe
+--max-log-bytes <bytes>     Per-stream log cap (default: 33554432)
 -n, --namespace <name>      Kubernetes namespace
 -o, --output <format>       text | json | markdown | html | bundle
 --kubeconfig <path>         Explicit kubeconfig (otherwise standard loading)

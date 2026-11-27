@@ -63,6 +63,7 @@ func TestGoldenFixtures(t *testing.T) {
 			bundle.Probe = &model.ProbeResult{Endpoint: "/v1/completions", Model: "test-model", RequestSentAt: request, FirstTokenAt: request.Add(400 * time.Millisecond), FirstToken: "Hello", StatusCode: 200}
 			return bundle
 		},
+		"sidecar-istio": sidecarIstioBundle,
 	}
 
 	names := make([]string, 0, len(cases))
@@ -85,11 +86,11 @@ func TestGoldenFixtures(t *testing.T) {
 			}
 			assertAccounting(t, report)
 
-			base := filepath.Join("..", "..", "testdata", "fixtures")
+			base := filepath.Join("..", "..", "testdata", "fixtures", "synthetic")
 			bundlePath := filepath.Join(base, name+".bundle.json")
 			reportPath := filepath.Join(base, name+".report.json")
 			if update {
-				if err := os.MkdirAll(base, 0o755); err != nil {
+				if err := os.MkdirAll(base, 0o750); err != nil {
 					t.Fatal(err)
 				}
 				if err := writeIndentedJSON(bundlePath, bundle); err != nil {
@@ -146,11 +147,11 @@ func writeIndentedJSON(path string, value any) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, append(data, '\n'), 0o644)
+	return os.WriteFile(path, append(data, '\n'), 0o600)
 }
 
 func readJSON(path string, value any) error {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- golden paths are fixed below testdata/fixtures/synthetic.
 	if err != nil {
 		return err
 	}

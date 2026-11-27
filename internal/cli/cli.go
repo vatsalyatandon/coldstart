@@ -31,6 +31,7 @@ type options struct {
 	compareRef   string
 	probeEnabled bool
 	probePrompt  string
+	maxLogBytes  int64
 }
 
 // NewRootCommand returns the kubectl plugin command.
@@ -58,6 +59,7 @@ func NewRootCommand() *cobra.Command {
 	flags.StringVar(&opts.compareRef, "compare", "", "compare against another pod or deployment reference")
 	flags.BoolVar(&opts.probeEnabled, "probe", false, "measure first streamed token via port-forward")
 	flags.StringVar(&opts.probePrompt, "probe-prompt", "Hello", "prompt for the optional first-token probe")
+	flags.Int64Var(&opts.maxLogBytes, "max-log-bytes", collect.DefaultMaxLogBytes, "maximum bytes read per current or previous container log stream")
 	return cmd
 }
 
@@ -120,6 +122,9 @@ func validateOptions(args []string, opts *options) error {
 	default:
 		return fmt.Errorf("unsupported output format %q (want text, json, markdown, html, or bundle)", opts.output)
 	}
+	if opts.maxLogBytes < 0 {
+		return fmt.Errorf("--max-log-bytes must be non-negative")
+	}
 	if opts.fromBundle != "" {
 		if len(args) != 0 {
 			return fmt.Errorf("--from-bundle cannot be combined with a resource argument")
@@ -159,6 +164,7 @@ func collectBundle(ctx context.Context, resource string, opts *options) (model.B
 		Resource:        resource,
 		Container:       opts.container,
 		IncludePrevious: true,
+		MaxLogBytes:     opts.maxLogBytes,
 	})
 	if err != nil {
 		return model.Bundle{}, err
@@ -187,7 +193,7 @@ func readBundle(stdin io.Reader, name string) (model.Bundle, error) {
 	if name == "-" {
 		reader = stdin
 	} else {
-		opened, err := os.Open(name)
+		opened, err := os.Open(name) // #nosec G304 -- bundle paths are explicit user input.
 		if err != nil {
 			return model.Bundle{}, fmt.Errorf("open bundle %s: %w", name, err)
 		}
@@ -195,7 +201,11 @@ func readBundle(stdin io.Reader, name string) (model.Bundle, error) {
 		reader = file
 	}
 	if file != nil {
-		defer file.Close()
+		defer func() {
+			// ReadBundle has finished before close; cleanup errors do not change
+			// the parsed bundle.
+			_ = file.Close()
+		}()
 	}
 	bundle, err := bundleio.Read(reader)
 	if err != nil {

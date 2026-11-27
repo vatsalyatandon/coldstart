@@ -70,6 +70,9 @@ func renderHTML(ctx context.Context, w io.Writer, report model.Report) error {
 		Warnings:  reportWarnings(report),
 		Timelines: htmlTimelines(report),
 	}
+	if label := engineContainerLabel(report.Engine); label != "" {
+		data.Engine += " · " + label
+	}
 	for _, attempt := range report.Attempts {
 		data.Attempts = append(data.Attempts, htmlAttempt{
 			Index:       attempt.Index,
@@ -141,7 +144,7 @@ func htmlPhases(phases []model.Phase, total float64) []htmlPhase {
 			ID:            phase.ID,
 			Duration:      formatDuration(phase.Secs),
 			Percent:       formatPercent(phase.Secs, total),
-			WidthStyle:    htmltemplate.CSS(fmt.Sprintf("width: %.4f%%", percent)),
+			WidthStyle:    htmltemplate.CSS(fmt.Sprintf("width: %.4f%%", percent)), // #nosec G203 -- percent is numeric, clamped, and formatted with %.4f.
 			Source:        phase.Source,
 			Confidence:    confidence,
 			ConfidenceKey: strings.ToLower(confidence),
@@ -402,7 +405,7 @@ const htmlDocument = `<!doctype html>
       {{if .Findings}}
       <div class="table-scroll">
         <table class="findings-table">
-          <caption>Findings ranked by estimated recoverable seconds</caption>
+          <caption>Findings ranked by confidence-weighted recoverable seconds</caption>
           <thead>
             <tr>
               <th scope="col" class="numeric">Rank</th>

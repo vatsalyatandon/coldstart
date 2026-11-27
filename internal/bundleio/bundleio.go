@@ -268,7 +268,7 @@ func Read(r io.Reader) (model.Bundle, error) {
 		}
 		seen[memberName] = struct{}{}
 
-		if hdr.Typeflag != tar.TypeReg && hdr.Typeflag != tar.TypeRegA && hdr.Typeflag != tar.TypeDir {
+		if hdr.Typeflag != tar.TypeReg && hdr.Typeflag != tar.TypeDir {
 			return model.Bundle{}, fmt.Errorf("bundleio: unsupported archive member type %d for %q", hdr.Typeflag, hdr.Name)
 		}
 		if hdr.Typeflag == tar.TypeDir {

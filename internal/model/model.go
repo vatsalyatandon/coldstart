@@ -30,10 +30,13 @@ type Bundle struct {
 }
 
 // LogCapture is one container log stream. Previous is true for kubectl's
-// --previous stream. Lines have already been split and timestamped.
+// --previous stream. Lines have already been split and timestamped. Truncated
+// indicates that the stream reached the collection byte cap.
 type LogCapture struct {
 	Container string    `json:"container"`
+	Init      bool      `json:"init,omitempty"`
 	Previous  bool      `json:"previous,omitempty"`
+	Truncated bool      `json:"truncated,omitempty"`
 	Lines     []LogLine `json:"lines"`
 }
 
@@ -53,10 +56,11 @@ type ProbeResult struct {
 }
 
 type EngineInfo struct {
-	Name      string `json:"name"`
-	Version   string `json:"version"`
-	Container string `json:"container,omitempty"`
-	RulePack  string `json:"rulePack,omitempty"`
+	Name            string `json:"name"`
+	Version         string `json:"version"`
+	Container       string `json:"container,omitempty"`
+	ContainerSource string `json:"containerSource,omitempty"`
+	RulePack        string `json:"rulePack,omitempty"`
 }
 
 type Hardware struct {
@@ -80,13 +84,14 @@ type Phase struct {
 }
 
 type Attempt struct {
-	Index       int        `json:"index"`
-	Outcome     string     `json:"outcome"`
-	Start       *time.Time `json:"start"`
-	End         *time.Time `json:"end"`
-	CrashReason string     `json:"crashReason,omitempty"`
-	LostSecs    float64    `json:"lostSecs,omitempty"`
-	Phases      []Phase    `json:"phases"`
+	Index       int            `json:"index"`
+	Outcome     string         `json:"outcome"`
+	Start       *time.Time     `json:"start"`
+	End         *time.Time     `json:"end"`
+	CrashReason string         `json:"crashReason,omitempty"`
+	LostSecs    float64        `json:"lostSecs,omitempty"`
+	Attrs       map[string]any `json:"attrs,omitempty"`
+	Phases      []Phase        `json:"phases"`
 }
 
 type Finding struct {
@@ -96,6 +101,7 @@ type Finding struct {
 	Recommendation     string  `json:"recommendation"`
 	EstRecoverableSecs float64 `json:"recoverableSecs"`
 	Confidence         string  `json:"confidence"`
+	Tradeoff           string  `json:"tradeoff,omitempty"`
 	Text               string  `json:"text"`
 }
 

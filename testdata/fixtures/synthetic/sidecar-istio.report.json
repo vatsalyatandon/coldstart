@@ -5,6 +5,7 @@
     "name": "vllm",
     "version": "0.30.0",
     "container": "engine",
+    "containerSource": "detected",
     "rulePack": "embedded/vllm/ge0.11-lt0.40.yaml"
   },
   "hardware": {
@@ -31,8 +32,8 @@
       "id": "unattributed",
       "name": "unattributed",
       "start": "2026-11-27T02:41:19Z",
-      "end": "2026-11-27T02:41:24.9Z",
-      "secs": 5.9,
+      "end": "2026-11-27T02:41:39Z",
+      "secs": 20,
       "source": "gap",
       "confidence": "low",
       "attrs": {
@@ -40,25 +41,33 @@
       }
     },
     {
+      "id": "container_boot",
+      "name": "container start → engine boot",
+      "start": "2026-11-27T02:41:39Z",
+      "end": "2026-11-27T02:41:49Z",
+      "secs": 10,
+      "source": "status+log",
+      "confidence": "medium"
+    },
+    {
       "id": "weights_load",
       "name": "weights load",
-      "start": "2026-11-27T02:41:24.9Z",
-      "end": "2026-11-27T02:42:10Z",
-      "secs": 45.1,
+      "start": "2026-11-27T02:41:49Z",
+      "end": "2026-11-27T02:42:19Z",
+      "secs": 30,
       "source": "log",
       "confidence": "high",
       "attrs": {
-        "engine_reported_secs": 45.1,
-        "storage": "",
-        "timestamp_secs": 31
+        "engine_reported_secs": 30,
+        "storage": ""
       }
     },
     {
       "id": "torch_compile",
       "name": "torch.compile",
-      "start": "2026-11-27T02:42:10Z",
-      "end": "2026-11-27T02:42:39Z",
-      "secs": 29,
+      "start": "2026-11-27T02:42:19Z",
+      "end": "2026-11-27T02:42:49Z",
+      "secs": 30,
       "source": "log",
       "confidence": "high",
       "attrs": {
@@ -69,8 +78,8 @@
     {
       "id": "cuda_graph",
       "name": "CUDA graph capture",
-      "start": "2026-11-27T02:42:39Z",
-      "end": "2026-11-27T02:42:49Z",
+      "start": "2026-11-27T02:42:49Z",
+      "end": "2026-11-27T02:42:59Z",
       "secs": 10,
       "source": "log",
       "confidence": "high",
@@ -81,8 +90,8 @@
     {
       "id": "kv_cache_warmup",
       "name": "KV cache / warmup",
-      "start": "2026-11-27T02:42:49Z",
-      "end": "2026-11-27T02:42:59Z",
+      "start": "2026-11-27T02:42:59Z",
+      "end": "2026-11-27T02:43:09Z",
       "secs": 10,
       "source": "log",
       "confidence": "medium"
@@ -90,8 +99,8 @@
     {
       "id": "api_server_up",
       "name": "API server up",
-      "start": "2026-11-27T02:42:59Z",
-      "end": "2026-11-27T02:43:09Z",
+      "start": "2026-11-27T02:43:09Z",
+      "end": "2026-11-27T02:43:19Z",
       "secs": 10,
       "source": "log",
       "confidence": "high"
@@ -99,9 +108,9 @@
     {
       "id": "readiness_lag",
       "name": "readiness lag",
-      "start": "2026-11-27T02:43:09Z",
+      "start": "2026-11-27T02:43:19Z",
       "end": "2026-11-27T02:44:29Z",
-      "secs": 80,
+      "secs": 70,
       "source": "log+status",
       "confidence": "high",
       "attrs": {
@@ -129,8 +138,8 @@
           "id": "unattributed",
           "name": "unattributed",
           "start": "2026-11-27T02:41:19Z",
-          "end": "2026-11-27T02:41:24.9Z",
-          "secs": 5.9,
+          "end": "2026-11-27T02:41:39Z",
+          "secs": 20,
           "source": "gap",
           "confidence": "low",
           "attrs": {
@@ -138,25 +147,33 @@
           }
         },
         {
+          "id": "container_boot",
+          "name": "container start → engine boot",
+          "start": "2026-11-27T02:41:39Z",
+          "end": "2026-11-27T02:41:49Z",
+          "secs": 10,
+          "source": "status+log",
+          "confidence": "medium"
+        },
+        {
           "id": "weights_load",
           "name": "weights load",
-          "start": "2026-11-27T02:41:24.9Z",
-          "end": "2026-11-27T02:42:10Z",
-          "secs": 45.1,
+          "start": "2026-11-27T02:41:49Z",
+          "end": "2026-11-27T02:42:19Z",
+          "secs": 30,
           "source": "log",
           "confidence": "high",
           "attrs": {
-            "engine_reported_secs": 45.1,
-            "storage": "",
-            "timestamp_secs": 31
+            "engine_reported_secs": 30,
+            "storage": ""
           }
         },
         {
           "id": "torch_compile",
           "name": "torch.compile",
-          "start": "2026-11-27T02:42:10Z",
-          "end": "2026-11-27T02:42:39Z",
-          "secs": 29,
+          "start": "2026-11-27T02:42:19Z",
+          "end": "2026-11-27T02:42:49Z",
+          "secs": 30,
           "source": "log",
           "confidence": "high",
           "attrs": {
@@ -167,8 +184,8 @@
         {
           "id": "cuda_graph",
           "name": "CUDA graph capture",
-          "start": "2026-11-27T02:42:39Z",
-          "end": "2026-11-27T02:42:49Z",
+          "start": "2026-11-27T02:42:49Z",
+          "end": "2026-11-27T02:42:59Z",
           "secs": 10,
           "source": "log",
           "confidence": "high",
@@ -179,8 +196,8 @@
         {
           "id": "kv_cache_warmup",
           "name": "KV cache / warmup",
-          "start": "2026-11-27T02:42:49Z",
-          "end": "2026-11-27T02:42:59Z",
+          "start": "2026-11-27T02:42:59Z",
+          "end": "2026-11-27T02:43:09Z",
           "secs": 10,
           "source": "log",
           "confidence": "medium"
@@ -188,8 +205,8 @@
         {
           "id": "api_server_up",
           "name": "API server up",
-          "start": "2026-11-27T02:42:59Z",
-          "end": "2026-11-27T02:43:09Z",
+          "start": "2026-11-27T02:43:09Z",
+          "end": "2026-11-27T02:43:19Z",
           "secs": 10,
           "source": "log",
           "confidence": "high"
@@ -197,9 +214,9 @@
         {
           "id": "readiness_lag",
           "name": "readiness lag",
-          "start": "2026-11-27T02:43:09Z",
+          "start": "2026-11-27T02:43:19Z",
           "end": "2026-11-27T02:44:29Z",
-          "secs": 80,
+          "secs": 70,
           "source": "log+status",
           "confidence": "high",
           "attrs": {
@@ -209,21 +226,19 @@
       ]
     }
   ],
-  "unattributedSecs": 5.9,
+  "unattributedSecs": 20,
   "findings": [
     {
       "phase": "readiness_lag",
-      "observedSecs": 80,
+      "observedSecs": 70,
       "condition": "readiness lag exceeds one 30-second probe period",
       "recommendation": "Use a startupProbe and shorten readiness periodSeconds once the server has started.",
-      "recoverableSecs": 50,
+      "recoverableSecs": 40,
       "confidence": "high",
-      "text": "readiness lag 80.0s: Use a startupProbe and shorten readiness periodSeconds once the server has started."
+      "text": "readiness lag 70.0s: Use a startupProbe and shorten readiness periodSeconds once the server has started."
     }
   ],
-  "warnings": [
-    "overlapping markers clamped in torch_compile phase"
-  ],
+  "warnings": null,
   "rulePack": {
     "engine": "vllm",
     "version": "\u003e=0.11,\u003c0.40",

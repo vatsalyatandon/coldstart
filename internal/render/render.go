@@ -94,16 +94,6 @@ func formatDuration(secs float64) string {
 	return fmt.Sprintf("%dm %02ds", minutes, seconds)
 }
 
-func formatSignedDuration(secs float64) string {
-	if math.IsNaN(secs) || math.IsInf(secs, 0) || secs == 0 {
-		return formatDuration(secs)
-	}
-	if secs > 0 {
-		return "+" + formatDuration(secs)
-	}
-	return formatDuration(secs)
-}
-
 func formatPercent(secs, total float64) string {
 	if total <= 0 || math.IsNaN(total) || math.IsInf(total, 0) || math.IsNaN(secs) || math.IsInf(secs, 0) {
 		return "0.0%"
@@ -229,16 +219,37 @@ func reportWarnings(report model.Report) []string {
 }
 
 func findingBody(finding model.Finding) string {
+	var body string
 	if finding.Text != "" {
-		return finding.Text
+		body = finding.Text
+	} else if finding.Condition != "" {
+		body = finding.Condition
+	} else if finding.Recommendation != "" {
+		body = finding.Recommendation
+	} else {
+		body = "No finding details were provided."
 	}
-	if finding.Condition != "" {
-		return finding.Condition
+
+	tradeoff := strings.TrimSpace(finding.Tradeoff)
+	if tradeoff == "" {
+		return body
 	}
-	if finding.Recommendation != "" {
-		return finding.Recommendation
+	suffix := fmt.Sprintf("(trade-off: %s)", tradeoff)
+	if strings.Contains(strings.ToLower(body), strings.ToLower(suffix)) {
+		return body
 	}
-	return "No finding details were provided."
+	return body + " " + suffix
+}
+
+func engineContainerLabel(engine model.EngineInfo) string {
+	if engine.Container == "" {
+		return ""
+	}
+	source := engine.ContainerSource
+	if source == "" {
+		source = "detected"
+	}
+	return fmt.Sprintf("engine_container: %s (%s)", engine.Container, source)
 }
 
 func engineLabel(engine model.EngineInfo) string {
