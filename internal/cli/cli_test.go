@@ -80,9 +80,16 @@ func TestCompareBundleOutputRejected(t *testing.T) {
 	}
 }
 
+func TestNegativeLogCapRejected(t *testing.T) {
+	_, _, err := execute(t, "pod/a", "--max-log-bytes", "-1")
+	if err == nil || !strings.Contains(err.Error(), "non-negative") {
+		t.Fatalf("error = %v", err)
+	}
+}
+
 func writeGoldenBundle(t *testing.T, name string) string {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "fixtures", name+".bundle.json"))
+	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "fixtures", "synthetic", name+".bundle.json")) // #nosec G304 -- fixture names are fixed test cases below testdata/fixtures/synthetic.
 	if err != nil {
 		t.Fatal(err)
 	}

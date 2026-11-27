@@ -5,6 +5,7 @@
     "name": "vllm",
     "version": "0.30.0",
     "container": "engine",
+    "containerSource": "detected",
     "rulePack": "embedded/vllm/ge0.11-lt0.40.yaml"
   },
   "hardware": {
@@ -15,8 +16,8 @@
   },
   "t0": "2026-11-27T02:41:09Z",
   "readyAt": "2026-11-27T02:44:29Z",
-  "endAt": "2026-11-27T02:44:29Z",
-  "totalSecs": 200,
+  "endAt": "2026-11-27T02:44:29.4Z",
+  "totalSecs": 200.4,
   "phases": [
     {
       "id": "scheduling_wait",
@@ -106,6 +107,18 @@
       "attrs": {
         "probe_period_secs": 30
       }
+    },
+    {
+      "id": "first_token",
+      "name": "first token",
+      "start": "2026-11-27T02:44:29Z",
+      "end": "2026-11-27T02:44:29.4Z",
+      "secs": 0.4,
+      "source": "probe",
+      "confidence": "high",
+      "attrs": {
+        "model": "test-model"
+      }
     }
   ],
   "attempts": [
@@ -113,7 +126,7 @@
       "index": 0,
       "outcome": "ready",
       "start": "2026-11-27T02:41:09Z",
-      "end": "2026-11-27T02:44:29Z",
+      "end": "2026-11-27T02:44:29.4Z",
       "phases": [
         {
           "id": "scheduling_wait",
@@ -203,6 +216,18 @@
           "attrs": {
             "probe_period_secs": 30
           }
+        },
+        {
+          "id": "first_token",
+          "name": "first token",
+          "start": "2026-11-27T02:44:29Z",
+          "end": "2026-11-27T02:44:29.4Z",
+          "secs": 0.4,
+          "source": "probe",
+          "confidence": "high",
+          "attrs": {
+            "model": "test-model"
+          }
         }
       ]
     }
@@ -219,13 +244,19 @@
       "text": "readiness lag 80.0s: Use a startupProbe and shorten readiness periodSeconds once the server has started."
     }
   ],
-  "warnings": [
-    "events older than 1h may have expired; durable pod/status timestamps were used where possible"
-  ],
+  "warnings": null,
   "rulePack": {
     "engine": "vllm",
     "version": "\u003e=0.11,\u003c0.40",
     "path": "embedded/vllm/ge0.11-lt0.40.yaml"
   },
-  "capturedAt": "2026-11-27T04:41:09Z"
+  "probe": {
+    "endpoint": "/v1/completions",
+    "model": "test-model",
+    "requestSentAt": "2026-11-27T02:44:29Z",
+    "firstTokenAt": "2026-11-27T02:44:29.4Z",
+    "firstToken": "Hello",
+    "statusCode": 200
+  },
+  "capturedAt": "2026-11-27T02:44:29Z"
 }

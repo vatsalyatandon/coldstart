@@ -5,6 +5,7 @@
     "name": "sglang",
     "version": "0.4.0",
     "container": "sglang",
+    "containerSource": "detected",
     "rulePack": "embedded/sglang/ge0.4.yaml"
   },
   "hardware": {

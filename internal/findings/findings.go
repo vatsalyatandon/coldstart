@@ -82,7 +82,7 @@ func Build(report model.Report, selection rules.Selection, flags map[string]bool
 		add(model.Finding{Phase: "torch_compile", ObservedSecs: compileSecs, Condition: cacheCondition, Recommendation: recommendation(selection, "compile_cache_miss", "Persist the engine compile cache directory on a volume shared across restarts."), EstRecoverableSecs: recoverable, Confidence: cacheConfidence})
 	}
 	if compileSecs > 30 {
-		add(model.Finding{Phase: "torch_compile", ObservedSecs: compileSecs, Condition: "large compile phase and latency-tolerant workload", Recommendation: recommendation(selection, "compile_large_eager", "Consider eager mode if throughput trade-offs are acceptable; this removes compilation but can reduce serving throughput."), EstRecoverableSecs: compileSecs, Confidence: "low"})
+		add(model.Finding{Phase: "torch_compile", ObservedSecs: compileSecs, Condition: "large compile phase and latency-tolerant workload", Recommendation: recommendation(selection, "compile_large_eager", "Consider eager mode if throughput trade-offs are acceptable; this removes compilation but can reduce serving throughput."), EstRecoverableSecs: compileSecs, Confidence: "low", Tradeoff: "lower throughput"})
 	}
 	if graph := phases["cuda_graph"].secs; graph > 20 {
 		add(model.Finding{Phase: "cuda_graph", ObservedSecs: graph, Condition: "CUDA graph capture exceeds 20 seconds", Recommendation: recommendation(selection, "cuda_graph_large", "Reduce the number of captured batch sizes or use a smaller capture-size set."), EstRecoverableSecs: graph * 0.30, Confidence: "low"})
@@ -125,16 +125,59 @@ func Build(report model.Report, selection rules.Selection, flags map[string]bool
 		add(model.Finding{Phase: "unattributed", ObservedSecs: report.UnattributedSecs, Condition: "more than 10% of startup has no matching marker", Recommendation: "Gap not explained. Capture a reproducible bundle with `-o bundle` and open an issue.", EstRecoverableSecs: 0, Confidence: "low"})
 	}
 
-	sort.SliceStable(result, func(i, j int) bool {
-		if result[i].EstRecoverableSecs != result[j].EstRecoverableSecs {
-			return result[i].EstRecoverableSecs > result[j].EstRecoverableSecs
-		}
-		if result[i].ObservedSecs != result[j].ObservedSecs {
-			return result[i].ObservedSecs > result[j].ObservedSecs
-		}
-		return result[i].Phase < result[j].Phase
-	})
+	sortFindings(result)
 	return result
+}
+
+func sortFindings(findings []model.Finding) {
+	sort.SliceStable(findings, func(i, j int) bool {
+		left := weightedRecoverableSecs(findings[i])
+		right := weightedRecoverableSecs(findings[j])
+		if left != right {
+			return left > right
+		}
+		if findings[i].ObservedSecs != findings[j].ObservedSecs {
+			return findings[i].ObservedSecs > findings[j].ObservedSecs
+		}
+		return findings[i].Phase < findings[j].Phase
+	})
+}
+
+func weightedRecoverableSecs(finding model.Finding) float64 {
+	secs := finding.EstRecoverableSecs
+	if secs < 0 || math.IsNaN(secs) || math.IsInf(secs, 0) {
+		return 0
+	}
+	return secs * confidenceWeight(finding.Confidence)
+}
+
+func confidenceWeight(confidence string) float64 {
+	switch strings.ToLower(strings.TrimSpace(confidence)) {
+	case "high":
+		return 1.0
+	case "medium":
+		return 0.6
+	case "low":
+		return 0.3
+	default:
+		return 0
+	}
+}
+
+// PhaseTotalRecoverable returns the largest confidence-weighted recoverable
+// estimate for phase. Findings in the same phase are alternative fixes, so their
+// estimates are not added together. Unknown confidence levels receive no weight.
+func PhaseTotalRecoverable(findings []model.Finding, phase string) float64 {
+	total := 0.0
+	for _, finding := range findings {
+		if finding.Phase != phase {
+			continue
+		}
+		if weighted := weightedRecoverableSecs(finding); weighted > total {
+			total = weighted
+		}
+	}
+	return total
 }
 
 type aggregatePhase struct {

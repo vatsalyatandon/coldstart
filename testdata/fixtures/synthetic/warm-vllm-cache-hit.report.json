@@ -5,6 +5,7 @@
     "name": "vllm",
     "version": "0.30.0",
     "container": "engine",
+    "containerSource": "detected",
     "rulePack": "embedded/vllm/ge0.11-lt0.40.yaml"
   },
   "hardware": {
@@ -19,13 +20,25 @@
   "totalSecs": 200,
   "phases": [
     {
-      "id": "framework_bootstrap",
-      "name": "framework bootstrap",
+      "id": "scheduling_wait",
+      "name": "scheduling wait",
       "start": "2026-11-27T02:41:09Z",
-      "end": "2026-11-27T02:41:39Z",
-      "secs": 30,
-      "source": "log",
+      "end": "2026-11-27T02:41:19Z",
+      "secs": 10,
+      "source": "status",
       "confidence": "high"
+    },
+    {
+      "id": "unattributed",
+      "name": "unattributed",
+      "start": "2026-11-27T02:41:19Z",
+      "end": "2026-11-27T02:41:39Z",
+      "secs": 20,
+      "source": "gap",
+      "confidence": "low",
+      "attrs": {
+        "reason": "no matching marker"
+      }
     },
     {
       "id": "weights_load",
@@ -104,13 +117,25 @@
       "end": "2026-11-27T02:44:29Z",
       "phases": [
         {
-          "id": "framework_bootstrap",
-          "name": "framework bootstrap",
+          "id": "scheduling_wait",
+          "name": "scheduling wait",
           "start": "2026-11-27T02:41:09Z",
-          "end": "2026-11-27T02:41:39Z",
-          "secs": 30,
-          "source": "log",
+          "end": "2026-11-27T02:41:19Z",
+          "secs": 10,
+          "source": "status",
           "confidence": "high"
+        },
+        {
+          "id": "unattributed",
+          "name": "unattributed",
+          "start": "2026-11-27T02:41:19Z",
+          "end": "2026-11-27T02:41:39Z",
+          "secs": 20,
+          "source": "gap",
+          "confidence": "low",
+          "attrs": {
+            "reason": "no matching marker"
+          }
         },
         {
           "id": "weights_load",
@@ -183,7 +208,7 @@
       ]
     }
   ],
-  "unattributedSecs": 0,
+  "unattributedSecs": 20,
   "findings": [
     {
       "phase": "readiness_lag",
@@ -195,11 +220,7 @@
       "text": "readiness lag 80.0s: Use a startupProbe and shorten readiness periodSeconds once the server has started."
     }
   ],
-  "warnings": [
-    "clock skew clamped in container_boot phase",
-    "clock skew clamped in framework_bootstrap phase",
-    "overlapping markers clamped in scheduling_wait phase"
-  ],
+  "warnings": null,
   "rulePack": {
     "engine": "vllm",
     "version": "\u003e=0.11,\u003c0.40",

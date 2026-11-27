@@ -18,6 +18,10 @@ import (
 	"github.com/vatsalyatandon/coldstart/internal/model"
 )
 
+// DefaultMaxLogBytes is the per-stream log cap used when Options.MaxLogBytes is
+// zero or negative.
+const DefaultMaxLogBytes int64 = 32 << 20
+
 // Options controls which pod and logs are collected. Resource must be either
 // pod/<name> or deploy/<name>. An empty Namespace uses the kubeconfig context's
 // namespace, falling back to default.
@@ -27,6 +31,9 @@ type Options struct {
 	Resource        string
 	Container       string
 	IncludePrevious bool
+	// MaxLogBytes limits each current or previous log stream. Values <= 0 use
+	// DefaultMaxLogBytes.
+	MaxLogBytes int64
 }
 
 // ResourceRef is a parsed pod or deployment reference.

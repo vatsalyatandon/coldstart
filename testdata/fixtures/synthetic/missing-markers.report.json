@@ -5,6 +5,7 @@
     "name": "vllm",
     "version": "0.30.0",
     "container": "engine",
+    "containerSource": "detected",
     "rulePack": "embedded/vllm/ge0.11-lt0.40.yaml"
   },
   "hardware": {

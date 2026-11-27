@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/vatsalyatandon/coldstart/internal/model"
+	"github.com/vatsalyatandon/coldstart/internal/rules"
 )
 
 var fixtureT0 = time.Date(2026, 11, 27, 2, 41, 9, 0, time.UTC)
@@ -151,6 +152,29 @@ func TestSGLangTimeline(t *testing.T) {
 	}
 }
 
+func TestRotatedStartupLogsBecomeUnattributed(t *testing.T) {
+	bundle := warmBundle()
+	for i := range bundle.Logs[0].Lines {
+		bundle.Logs[0].Lines[i].Timestamp = bundle.Logs[0].Lines[i].Timestamp.Add(60 * time.Second)
+	}
+	bundle.Logs[0].Truncated = true
+	bundle.Metadata = map[string]string{"logs.engine.current.startupGapSecs": "60"}
+	report, err := Analyze(bundle, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertAccounting(t, report)
+	if got := sumPhase(report.Phases, "container_boot"); got != 0 {
+		t.Fatalf("rotated logs produced container_boot phase: %v", got)
+	}
+	if report.UnattributedSecs < 70 {
+		t.Fatalf("unattributed = %v, want pre-engine gap", report.UnattributedSecs)
+	}
+	if len(report.Attempts) != 1 || report.Attempts[0].Attrs["logs_truncated"] != true || report.Attempts[0].Attrs["startup_logs_rotated"] != true {
+		t.Fatalf("attempt attrs = %+v", report.Attempts)
+	}
+}
+
 func TestMissingCaptureTimeIsDeterministic(t *testing.T) {
 	bundle := warmBundle()
 	bundle.CapturedAt = time.Time{}
@@ -227,6 +251,49 @@ func warmBundle() model.Bundle {
 		at(120, "Application startup complete"),
 	}}}
 	return bundle
+}
+
+func sidecarIstioBundle() model.Bundle {
+	bundle := warmBundle()
+	bundle.Pod.Spec.Containers = append(bundle.Pod.Spec.Containers, corev1.Container{Name: "istio-proxy", Image: "istio/proxyv2:1.24"})
+	bundle.Pod.Status.ContainerStatuses = append(bundle.Pod.Status.ContainerStatuses, corev1.ContainerStatus{
+		Name: "istio-proxy", Ready: true, State: corev1.ContainerState{Running: &corev1.ContainerStateRunning{StartedAt: metav1.NewTime(fixtureT0.Add(20 * time.Second))}},
+	})
+	for i := range bundle.Logs[0].Lines {
+		bundle.Logs[0].Lines[i].Timestamp = bundle.Logs[0].Lines[i].Timestamp.Add(10 * time.Second)
+	}
+	bundle.Logs = append(bundle.Logs, model.LogCapture{Container: "istio-proxy", Lines: []model.LogLine{
+		at(20, "istio-proxy started"),
+		at(25, "Envoy proxy is ready"),
+	}})
+	return bundle
+}
+
+func TestEngineContainerSelectionIgnoresSidecarAndPrefersGPU(t *testing.T) {
+	bundle := sidecarIstioBundle()
+	packs, err := rules.Load("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	detection, source := selectEngineContainer(bundle, packs, "")
+	if detection.Container != "engine" || source != "detected" {
+		t.Fatalf("detection = %+v, source = %s", detection, source)
+	}
+
+	bundle.Pod.Spec.Containers = append(bundle.Pod.Spec.Containers, corev1.Container{
+		Name: "gpu-worker", Image: "vllm/vllm-openai:v0.30.0",
+		Resources: corev1.ResourceRequirements{Requests: corev1.ResourceList{"nvidia.com/gpu": resource.MustParse("1")}},
+	})
+	bundle.Logs = append(bundle.Logs, model.LogCapture{Container: "gpu-worker", Lines: []model.LogLine{at(35, "vLLM API server version 0.30.0")}})
+	detection, source = selectEngineContainer(bundle, packs, "")
+	if detection.Container != "gpu-worker" || source != "detected" {
+		t.Fatalf("GPU detection = %+v, source = %s", detection, source)
+	}
+
+	detection, source = selectEngineContainer(bundle, packs, "istio-proxy")
+	if detection.Container != "istio-proxy" || source != "flag" {
+		t.Fatalf("flag detection = %+v, source = %s", detection, source)
+	}
 }
 
 func crashBundle() model.Bundle {
@@ -327,13 +394,4 @@ func findPhase(phases []model.Phase, id string) *model.Phase {
 		}
 	}
 	return nil
-}
-
-func contains(values []string, want string) bool {
-	for _, value := range values {
-		if value == want {
-			return true
-		}
-	}
-	return false
 }

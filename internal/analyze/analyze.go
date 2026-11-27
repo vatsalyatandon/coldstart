@@ -89,27 +89,8 @@ func Analyze(bundle model.Bundle, opts Options) (model.Report, error) {
 	if err != nil {
 		return model.Report{}, err
 	}
-	detectionBundle := bundle
-	if opts.Container != "" {
-		logs := make([]model.LogCapture, 0, len(bundle.Logs))
-		for _, capture := range bundle.Logs {
-			if capture.Container == opts.Container {
-				logs = append(logs, capture)
-			}
-		}
-		detectionBundle.Logs = logs
-	}
-	detection := rules.Detect(detectionBundle, packs)
-	if opts.Container != "" {
-		detection.Container = opts.Container
-	}
-	if detection.Container == "" {
-		detection.Container = primaryContainerName(bundle.Pod)
-	}
-	if detection.Version == "" {
-		detection.Version = versionFromContainer(bundle.Pod, detection.Container)
-	}
-	report.Engine = model.EngineInfo{Name: detection.Engine, Version: detection.Version, Container: detection.Container}
+	detection, containerSource := selectEngineContainer(bundle, packs, opts.Container)
+	report.Engine = model.EngineInfo{Name: detection.Engine, Version: detection.Version, Container: detection.Container, ContainerSource: containerSource}
 
 	selection, ok := rules.Select(packs, detection)
 	if !ok {
@@ -131,9 +112,19 @@ func Analyze(bundle model.Bundle, opts Options) (model.Report, error) {
 	}
 	lines := logLines(bundle, detection.Container, false, time.Time{}, time.Time{})
 	firstLog := firstTimestamp(lines)
+	_, logsRotated := logCaptureState(bundle, detection.Container, false)
+	if logsRotated && !containsWarning(report.Warnings, "startup logs appear rotated away") {
+		report.Warnings = append(report.Warnings, "startup logs appear rotated away; pre-engine time is unattributed")
+	}
 	match := rules.MatchResult{Phases: map[string]rules.PhaseMatch{}, Flags: map[string]bool{}, Attrs: map[string]float64{}}
 	if ok {
 		match = rules.Match(lines, selection.Pack)
+		initMatch := rules.Match(initContainerLogLines(bundle), selection.Pack)
+		for flag, set := range initMatch.Flags {
+			if set {
+				match.Flags[flag] = true
+			}
+		}
 		if download := match.Phases["weights_download"]; download.Start != nil && download.End == nil {
 			if load := match.Phases["weights_load"]; load.Start != nil && load.Start.After(*download.Start) {
 				download.End = load.Start
@@ -150,7 +141,7 @@ func Analyze(bundle model.Bundle, opts Options) (model.Report, error) {
 	}
 
 	candidates := kubernetesCandidates(bundle, t0, end, &report)
-	candidates = append(candidates, engineCandidates(lines, match, firstLog, containerStart, lastInitFinish, readyAt, &end)...)
+	candidates = append(candidates, engineCandidates(lines, match, firstLog, containerStart, lastInitFinish, readyAt, &end, logsRotated)...)
 	probePeriod := readinessProbePeriod(bundle.Pod, detection.Container)
 	for i := range candidates {
 		if candidates[i].phase.ID == "readiness_lag" {
@@ -298,10 +289,10 @@ func kubernetesCandidates(bundle model.Bundle, t0, end time.Time, report *model.
 	return out
 }
 
-func engineCandidates(lines []model.LogLine, match rules.MatchResult, firstLog, containerStart, lastInitFinish, readyAt, end *time.Time) []candidate {
+func engineCandidates(lines []model.LogLine, match rules.MatchResult, firstLog, containerStart, lastInitFinish, readyAt, end *time.Time, logsRotated bool) []candidate {
 	var out []candidate
 	if len(lines) == 0 || firstLog == nil {
-		if containerStart != nil && containerStart.Before(*end) {
+		if !logsRotated && containerStart != nil && containerStart.Before(*end) {
 			reason := "no engine logs"
 			if len(lines) > 0 {
 				reason = "no timestamped engine logs"
@@ -326,7 +317,7 @@ func engineCandidates(lines []model.LogLine, match rules.MatchResult, firstLog, 
 		}
 	}
 
-	if containerStart != nil {
+	if containerStart != nil && !logsRotated {
 		start := *containerStart
 		if lastInitFinish != nil && lastInitFinish.After(start) {
 			start = *lastInitFinish
@@ -510,7 +501,7 @@ func buildAttempts(bundle model.Bundle, container string, status corev1.Containe
 		if outcome == "failed" && currentStart != nil && end.After(*currentStart) {
 			lost = end.Sub(*currentStart).Seconds()
 		}
-		attempts = append(attempts, model.Attempt{Index: 0, Outcome: outcome, Start: &t0, End: &end, LostSecs: lost, Phases: clonePhases(overall)})
+		attempts = append(attempts, model.Attempt{Index: 0, Outcome: outcome, Start: &t0, End: &end, LostSecs: lost, Attrs: logAttemptAttrs(bundle, container, false), Phases: clonePhases(overall)})
 		return attempts
 	}
 
@@ -523,13 +514,13 @@ func buildAttempts(bundle model.Bundle, container string, status corev1.Containe
 	if outcome == "failed" && end.After(*currentStart) {
 		currentLost = end.Sub(*currentStart).Seconds()
 	}
-	attempts = append(attempts, model.Attempt{Index: restartCount, Outcome: outcome, Start: currentStart, End: &end, CrashReason: terminationReason(status.State.Terminated), LostSecs: currentLost, Phases: currentPhases})
+	attempts = append(attempts, model.Attempt{Index: restartCount, Outcome: outcome, Start: currentStart, End: &end, CrashReason: terminationReason(status.State.Terminated), LostSecs: currentLost, Attrs: logAttemptAttrs(bundle, container, false), Phases: currentPhases})
 
 	previous := status.LastTerminationState.Terminated
 	if previous != nil && !previous.StartedAt.IsZero() && !previous.FinishedAt.IsZero() && previous.FinishedAt.After(previous.StartedAt.Time) {
 		start, finish := previous.StartedAt.Time.UTC(), previous.FinishedAt.Time.UTC()
 		phases := previousAttemptPhases(bundle, container, selection, hasRules, start, finish)
-		attempts = append(attempts, model.Attempt{Index: restartCount - 1, Outcome: "failed", Start: &start, End: &finish, CrashReason: terminationReason(previous), LostSecs: finish.Sub(start).Seconds(), Phases: phases})
+		attempts = append(attempts, model.Attempt{Index: restartCount - 1, Outcome: "failed", Start: &start, End: &finish, CrashReason: terminationReason(previous), LostSecs: finish.Sub(start).Seconds(), Attrs: logAttemptAttrs(bundle, container, true), Phases: phases})
 		if restartCount > 1 {
 			unknownEnd := start
 			phases, _ := normalize(t0, unknownEnd, []candidate{makeCandidate("restart_attempt", "earlier failed attempts (details unavailable)", t0, unknownEnd, "status", "medium", map[string]any{"attempts": restartCount - 1}, 50)}, &[]string{})
@@ -547,9 +538,10 @@ func buildAttempts(bundle model.Bundle, container string, status corev1.Containe
 func previousAttemptPhases(bundle model.Bundle, container string, selection rules.Selection, hasRules bool, start, end time.Time) []model.Phase {
 	lines := logLines(bundle, container, true, start, end)
 	var candidates []candidate
+	_, rotated := logCaptureState(bundle, container, true)
 	if hasRules {
 		match := rules.Match(lines, selection.Pack)
-		candidates = engineCandidates(lines, match, firstTimestamp(lines), &start, nil, nil, &end)
+		candidates = engineCandidates(lines, match, firstTimestamp(lines), &start, nil, nil, &end, rotated)
 	}
 	phases, _ := normalize(start, end, candidates, &[]string{})
 	return phases
@@ -706,6 +698,94 @@ func hardware(bundle model.Bundle, t0 time.Time, readyAt *time.Time) model.Hardw
 	return hw
 }
 
+func selectEngineContainer(bundle model.Bundle, packs []rules.Pack, override string) (rules.Detection, string) {
+	if override != "" {
+		filtered := bundle
+		filtered.Logs = logsForContainer(bundle, override, false)
+		detection := rules.Detect(filtered, packs)
+		detection.Container = override
+		if detection.Version == "" {
+			detection.Version = versionFromContainer(bundle.Pod, override)
+		}
+		return detection, "flag"
+	}
+
+	var best rules.Detection
+	bestGPU := false
+	for _, container := range bundle.Pod.Spec.Containers {
+		filtered := bundle
+		filtered.Logs = logsForContainer(bundle, container.Name, false)
+		if len(filtered.Logs) == 0 {
+			continue
+		}
+		detection := rules.Detect(filtered, packs)
+		// Metadata fallback is useful only after no main container's logs
+		// matched. It must not allow an arbitrary sidecar to become the engine.
+		if detection.FirstLog == nil {
+			continue
+		}
+		detection.Container = container.Name
+		if detection.Version == "" {
+			detection.Version = versionFromContainer(bundle.Pod, container.Name)
+		}
+		gpu := containerRequestsGPU(container)
+		if best.Container == "" || (gpu && !bestGPU) || (gpu == bestGPU && detection.FirstLog.Before(*best.FirstLog)) {
+			best, bestGPU = detection, gpu
+		}
+	}
+	if best.Container != "" {
+		return best, "detected"
+	}
+
+	// No log signature matched: retain the prior metadata fallback, but only
+	// for the first main container. Init and sidecar logs never drive P4–P11.
+	container := primaryContainerName(bundle.Pod)
+	filtered := bundle
+	filtered.Logs = logsForContainer(bundle, container, false)
+	detection := rules.Detect(filtered, packs)
+	detection.Container = container
+	if detection.Version == "" {
+		detection.Version = versionFromContainer(bundle.Pod, container)
+	}
+	return detection, "detected"
+}
+
+func logsForContainer(bundle model.Bundle, container string, previous bool) []model.LogCapture {
+	var logs []model.LogCapture
+	for _, capture := range bundle.Logs {
+		if capture.Container == container && capture.Previous == previous && !capture.Init {
+			logs = append(logs, capture)
+		}
+	}
+	return logs
+}
+
+func initContainerLogLines(bundle model.Bundle) []model.LogLine {
+	initNames := make(map[string]bool, len(bundle.Pod.Spec.InitContainers))
+	for _, container := range bundle.Pod.Spec.InitContainers {
+		initNames[container.Name] = true
+	}
+	var lines []model.LogLine
+	for _, capture := range bundle.Logs {
+		if capture.Previous || !capture.Init || !initNames[capture.Container] {
+			continue
+		}
+		lines = append(lines, capture.Lines...)
+	}
+	sort.SliceStable(lines, func(i, j int) bool { return lines[i].Timestamp.Before(lines[j].Timestamp) })
+	return lines
+}
+
+func containerRequestsGPU(container corev1.Container) bool {
+	for _, resources := range []corev1.ResourceList{container.Resources.Requests, container.Resources.Limits} {
+		quantity := resources["nvidia.com/gpu"]
+		if !quantity.IsZero() {
+			return true
+		}
+	}
+	return false
+}
+
 func readinessProbePeriod(pod corev1.Pod, containerName string) int32 {
 	for _, container := range pod.Spec.Containers {
 		if container.Name == containerName && container.ReadinessProbe != nil && container.ReadinessProbe.PeriodSeconds > 0 {
@@ -762,10 +842,7 @@ func lastInitFinish(pod corev1.Pod) *time.Time {
 func logLines(bundle model.Bundle, container string, previous bool, start, end time.Time) []model.LogLine {
 	var lines []model.LogLine
 	for _, capture := range bundle.Logs {
-		if capture.Previous != previous {
-			continue
-		}
-		if container != "" && capture.Container != container {
+		if capture.Container != container || capture.Previous != previous || capture.Init {
 			continue
 		}
 		for _, line := range capture.Lines {
@@ -780,6 +857,47 @@ func logLines(bundle model.Bundle, container string, previous bool, start, end t
 	}
 	sort.SliceStable(lines, func(i, j int) bool { return lines[i].Timestamp.Before(lines[j].Timestamp) })
 	return lines
+}
+
+func logCaptureState(bundle model.Bundle, container string, previous bool) (truncated, rotated bool) {
+	for _, capture := range bundle.Logs {
+		if capture.Container == container && capture.Previous == previous && !capture.Init && capture.Truncated {
+			truncated = true
+		}
+	}
+	stream := "current"
+	if previous {
+		stream = "previous"
+	}
+	key := fmt.Sprintf("logs.%s.%s.startupGapSecs", container, stream)
+	if raw := bundle.Metadata[key]; raw != "" {
+		gap, err := strconv.ParseFloat(raw, 64)
+		if err == nil && gap > 30 {
+			rotated = true
+		}
+	}
+	return truncated, rotated
+}
+
+func logAttemptAttrs(bundle model.Bundle, container string, previous bool) map[string]any {
+	truncated, rotated := logCaptureState(bundle, container, previous)
+	if !truncated && !rotated {
+		return nil
+	}
+	attrs := map[string]any{"logs_truncated": true}
+	if rotated {
+		attrs["startup_logs_rotated"] = true
+	}
+	return attrs
+}
+
+func containsWarning(warnings []string, prefix string) bool {
+	for _, warning := range warnings {
+		if strings.Contains(warning, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 func firstTimestamp(lines []model.LogLine) *time.Time {

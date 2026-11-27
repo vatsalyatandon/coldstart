@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"sort"
 	"strings"
 	"unicode/utf8"
@@ -26,14 +27,43 @@ func marshalIndentedJSON(value any) ([]byte, error) {
 
 func sortFindings(findings []model.Finding) {
 	sort.SliceStable(findings, func(i, j int) bool {
-		return findings[i].EstRecoverableSecs > findings[j].EstRecoverableSecs
+		left := findingRankScore(findings[i])
+		right := findingRankScore(findings[j])
+		if left != right {
+			return left > right
+		}
+		if findings[i].ObservedSecs != findings[j].ObservedSecs {
+			return findings[i].ObservedSecs > findings[j].ObservedSecs
+		}
+		return findings[i].Phase < findings[j].Phase
 	})
+}
+
+func findingRankScore(finding model.Finding) float64 {
+	secs := finding.EstRecoverableSecs
+	if secs < 0 || math.IsNaN(secs) || math.IsInf(secs, 0) {
+		return 0
+	}
+	switch strings.ToLower(strings.TrimSpace(finding.Confidence)) {
+	case "high":
+		return secs
+	case "medium":
+		return secs * 0.6
+	case "low":
+		return secs * 0.3
+	default:
+		return 0
+	}
 }
 
 func renderText(ctx context.Context, w io.Writer, report model.Report) error {
 	var b strings.Builder
-	fmt.Fprintf(&b, "%s  ·  %s  ·  %s  ·  total %s\n\n",
+	fmt.Fprintf(&b, "%s  ·  %s  ·  %s  ·  total %s\n",
 		report.Pod, engineLabel(report.Engine), hardwareLabel(report.Hardware), formatDuration(report.TotalSecs))
+	if label := engineContainerLabel(report.Engine); label != "" {
+		fmt.Fprintf(&b, "%s\n", label)
+	}
+	b.WriteByte('\n')
 
 	phases := selectedTimeline(report)
 	const barWidth = 40
@@ -74,7 +104,7 @@ func renderText(ctx context.Context, w io.Writer, report model.Report) error {
 		}
 	}
 
-	b.WriteString("\nFindings (ranked by estimated recoverable seconds):\n")
+	b.WriteString("\nFindings (ranked by confidence-weighted recoverable seconds):\n")
 	findings := rankedFindings(report.Findings)
 	if len(findings) == 0 {
 		b.WriteString("  none\n")
@@ -140,6 +170,9 @@ func renderMarkdown(ctx context.Context, w io.Writer, report model.Report) error
 	b.WriteString("| Pod | Engine | Hardware | Total |\n|---|---|---|---|\n")
 	fmt.Fprintf(&b, "| %s | %s | %s | %s |\n\n",
 		markdownCell(report.Pod), markdownCell(engineLabel(report.Engine)), markdownCell(hardwareLabel(report.Hardware)), formatDuration(report.TotalSecs))
+	if label := engineContainerLabel(report.Engine); label != "" {
+		fmt.Fprintf(&b, "**%s**\n\n", markdownCell(label))
+	}
 
 	b.WriteString("## Startup waterfall\n\n")
 	b.WriteString("| Phase | Duration | % of total | Source | Confidence |\n|---|---:|---:|---|---|\n")
@@ -164,7 +197,7 @@ func renderMarkdown(ctx context.Context, w io.Writer, report model.Report) error
 		}
 	}
 
-	b.WriteString("\n## Findings (ranked by estimated recoverable seconds)\n\n")
+	b.WriteString("\n## Findings (ranked by confidence-weighted recoverable seconds)\n\n")
 	findings := rankedFindings(report.Findings)
 	if len(findings) == 0 {
 		b.WriteString("_No findings._\n")

@@ -46,9 +46,11 @@ func RenderText(ctx context.Context, w io.Writer, comparison Comparison) error {
 
 	b.WriteString("\nPhase deltas (after - before):\n")
 	tw := tabwriter.NewWriter(&b, 0, 4, 2, ' ', 0)
-	fmt.Fprintln(tw, "Phase\tBefore\tAfter\tDelta")
+	// tabwriter only writes to a strings.Builder, so formatting errors cannot
+	// occur; Flush below remains checked because it can propagate state errors.
+	_, _ = fmt.Fprintln(tw, "Phase\tBefore\tAfter\tDelta")
 	for _, phase := range comparison.Phases {
-		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n",
+		_, _ = fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n",
 			phase.Name, optionalDuration(phase.BeforeSecs, phase.BeforePresent),
 			optionalDuration(phase.AfterSecs, phase.AfterPresent), signedDelta(phase.DeltaSecs))
 	}

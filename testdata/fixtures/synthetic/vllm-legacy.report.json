@@ -1,0 +1,233 @@
+{
+  "schema": "coldstart/v1",
+  "pod": "inference/qwen3",
+  "engine": {
+    "name": "vllm",
+    "version": "0.10.1.1",
+    "container": "engine",
+    "containerSource": "detected",
+    "rulePack": "embedded/vllm/ge0.11-lt0.40.yaml"
+  },
+  "hardware": {
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "count": 1,
+    "node": "gpu-node-1",
+    "nodeFresh": false
+  },
+  "t0": "2026-11-27T02:41:09Z",
+  "readyAt": "2026-11-27T02:44:29Z",
+  "endAt": "2026-11-27T02:44:29Z",
+  "totalSecs": 200,
+  "phases": [
+    {
+      "id": "scheduling_wait",
+      "name": "scheduling wait",
+      "start": "2026-11-27T02:41:09Z",
+      "end": "2026-11-27T02:41:19Z",
+      "secs": 10,
+      "source": "status",
+      "confidence": "high"
+    },
+    {
+      "id": "unattributed",
+      "name": "unattributed",
+      "start": "2026-11-27T02:41:19Z",
+      "end": "2026-11-27T02:41:39Z",
+      "secs": 20,
+      "source": "gap",
+      "confidence": "low",
+      "attrs": {
+        "reason": "no matching marker"
+      }
+    },
+    {
+      "id": "weights_load",
+      "name": "weights load",
+      "start": "2026-11-27T02:41:39Z",
+      "end": "2026-11-27T02:42:09Z",
+      "secs": 30,
+      "source": "log",
+      "confidence": "high",
+      "attrs": {
+        "engine_reported_secs": 30,
+        "storage": ""
+      }
+    },
+    {
+      "id": "torch_compile",
+      "name": "torch.compile",
+      "start": "2026-11-27T02:42:09Z",
+      "end": "2026-11-27T02:42:39Z",
+      "secs": 30,
+      "source": "log",
+      "confidence": "high",
+      "attrs": {
+        "cache": "hit",
+        "engine_reported_secs": 30
+      }
+    },
+    {
+      "id": "cuda_graph",
+      "name": "CUDA graph capture",
+      "start": "2026-11-27T02:42:39Z",
+      "end": "2026-11-27T02:42:49Z",
+      "secs": 10,
+      "source": "log",
+      "confidence": "high",
+      "attrs": {
+        "engine_reported_secs": 10
+      }
+    },
+    {
+      "id": "kv_cache_warmup",
+      "name": "KV cache / warmup",
+      "start": "2026-11-27T02:42:49Z",
+      "end": "2026-11-27T02:42:59Z",
+      "secs": 10,
+      "source": "log",
+      "confidence": "medium"
+    },
+    {
+      "id": "api_server_up",
+      "name": "API server up",
+      "start": "2026-11-27T02:42:59Z",
+      "end": "2026-11-27T02:43:09Z",
+      "secs": 10,
+      "source": "log",
+      "confidence": "high"
+    },
+    {
+      "id": "readiness_lag",
+      "name": "readiness lag",
+      "start": "2026-11-27T02:43:09Z",
+      "end": "2026-11-27T02:44:29Z",
+      "secs": 80,
+      "source": "log+status",
+      "confidence": "high",
+      "attrs": {
+        "probe_period_secs": 30
+      }
+    }
+  ],
+  "attempts": [
+    {
+      "index": 0,
+      "outcome": "ready",
+      "start": "2026-11-27T02:41:09Z",
+      "end": "2026-11-27T02:44:29Z",
+      "phases": [
+        {
+          "id": "scheduling_wait",
+          "name": "scheduling wait",
+          "start": "2026-11-27T02:41:09Z",
+          "end": "2026-11-27T02:41:19Z",
+          "secs": 10,
+          "source": "status",
+          "confidence": "high"
+        },
+        {
+          "id": "unattributed",
+          "name": "unattributed",
+          "start": "2026-11-27T02:41:19Z",
+          "end": "2026-11-27T02:41:39Z",
+          "secs": 20,
+          "source": "gap",
+          "confidence": "low",
+          "attrs": {
+            "reason": "no matching marker"
+          }
+        },
+        {
+          "id": "weights_load",
+          "name": "weights load",
+          "start": "2026-11-27T02:41:39Z",
+          "end": "2026-11-27T02:42:09Z",
+          "secs": 30,
+          "source": "log",
+          "confidence": "high",
+          "attrs": {
+            "engine_reported_secs": 30,
+            "storage": ""
+          }
+        },
+        {
+          "id": "torch_compile",
+          "name": "torch.compile",
+          "start": "2026-11-27T02:42:09Z",
+          "end": "2026-11-27T02:42:39Z",
+          "secs": 30,
+          "source": "log",
+          "confidence": "high",
+          "attrs": {
+            "cache": "hit",
+            "engine_reported_secs": 30
+          }
+        },
+        {
+          "id": "cuda_graph",
+          "name": "CUDA graph capture",
+          "start": "2026-11-27T02:42:39Z",
+          "end": "2026-11-27T02:42:49Z",
+          "secs": 10,
+          "source": "log",
+          "confidence": "high",
+          "attrs": {
+            "engine_reported_secs": 10
+          }
+        },
+        {
+          "id": "kv_cache_warmup",
+          "name": "KV cache / warmup",
+          "start": "2026-11-27T02:42:49Z",
+          "end": "2026-11-27T02:42:59Z",
+          "secs": 10,
+          "source": "log",
+          "confidence": "medium"
+        },
+        {
+          "id": "api_server_up",
+          "name": "API server up",
+          "start": "2026-11-27T02:42:59Z",
+          "end": "2026-11-27T02:43:09Z",
+          "secs": 10,
+          "source": "log",
+          "confidence": "high"
+        },
+        {
+          "id": "readiness_lag",
+          "name": "readiness lag",
+          "start": "2026-11-27T02:43:09Z",
+          "end": "2026-11-27T02:44:29Z",
+          "secs": 80,
+          "source": "log+status",
+          "confidence": "high",
+          "attrs": {
+            "probe_period_secs": 30
+          }
+        }
+      ]
+    }
+  ],
+  "unattributedSecs": 20,
+  "findings": [
+    {
+      "phase": "readiness_lag",
+      "observedSecs": 80,
+      "condition": "readiness lag exceeds one 30-second probe period",
+      "recommendation": "Use a startupProbe and shorten readiness periodSeconds once the server has started.",
+      "recoverableSecs": 50,
+      "confidence": "high",
+      "text": "readiness lag 80.0s: Use a startupProbe and shorten readiness periodSeconds once the server has started."
+    }
+  ],
+  "warnings": [
+    "could not parse vllm version \"0.10.1.1\"; used embedded/vllm/ge0.11-lt0.40.yaml rules"
+  ],
+  "rulePack": {
+    "engine": "vllm",
+    "version": "\u003e=0.11,\u003c0.40",
+    "path": "embedded/vllm/ge0.11-lt0.40.yaml",
+    "warning": "could not parse vllm version \"0.10.1.1\"; used embedded/vllm/ge0.11-lt0.40.yaml rules"
+  },
+  "capturedAt": "2026-11-27T02:44:29Z"
+}

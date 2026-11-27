@@ -119,7 +119,11 @@ func Run(ctx context.Context, opts Options) (model.ProbeResult, error) {
 	if err != nil {
 		return fail(fmt.Errorf("send probe request: %w", err))
 	}
-	defer response.Body.Close()
+	defer func() {
+		// The response has been fully consumed for first-token parsing; a close
+		// error cannot change the measurement.
+		_ = response.Body.Close()
+	}()
 	result.StatusCode = response.StatusCode
 
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
@@ -291,6 +295,9 @@ func extractModel(container corev1.Container) string {
 }
 
 func startPortForward(ctx context.Context, config *rest.Config, namespace, podName string, remotePort int, timeout time.Duration) (int, func(), error) {
+	if remotePort < 1 || remotePort > 65535 {
+		return 0, nil, fmt.Errorf("invalid remote port %d", remotePort)
+	}
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return 0, nil, fmt.Errorf("create port-forward client: %w", err)
@@ -349,7 +356,7 @@ func startPortForward(ctx context.Context, config *rest.Config, namespace, podNa
 		stopForward()
 		return 0, nil, fmt.Errorf("read forwarded port: %w", err)
 	}
-	if len(ports) != 1 || ports[0].Remote != uint16(remotePort) {
+	if len(ports) != 1 || int(ports[0].Remote) != remotePort {
 		stopForward()
 		return 0, nil, fmt.Errorf("port-forward returned unexpected ports: %v", ports)
 	}

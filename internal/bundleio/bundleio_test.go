@@ -619,7 +619,11 @@ func readArchiveMembers(t *testing.T, archive []byte) map[string][]byte {
 	if err != nil {
 		t.Fatalf("open archive gzip: %v", err)
 	}
-	defer gz.Close()
+	defer func() {
+		// The archive is fully consumed above; gzip close errors cannot affect
+		// the extracted test members.
+		_ = gz.Close()
+	}()
 	tr := tar.NewReader(gz)
 	members := make(map[string][]byte)
 	for {

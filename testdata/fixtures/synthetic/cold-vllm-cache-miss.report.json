@@ -5,6 +5,7 @@
     "name": "vllm",
     "version": "0.30.0",
     "container": "engine",
+    "containerSource": "detected",
     "rulePack": "embedded/vllm/ge0.11-lt0.40.yaml"
   },
   "hardware": {
@@ -325,20 +326,21 @@
     {
       "phase": "torch_compile",
       "observedSecs": 53,
-      "condition": "large compile phase and latency-tolerant workload",
-      "recommendation": "Compilation is large. Consider eager mode if throughput trade-offs are acceptable; this removes compilation but can reduce serving throughput.",
-      "recoverableSecs": 53,
-      "confidence": "low",
-      "text": "torch.compile 53.0s: Compilation is large. Consider eager mode if throughput trade-offs are acceptable; this removes compilation but can reduce serving throughput."
-    },
-    {
-      "phase": "torch_compile",
-      "observedSecs": 53,
       "condition": "compile cache miss",
       "recommendation": "Compile cache miss. Persist the vLLM compile cache directory on a volume shared across restarts.",
       "recoverableSecs": 37.1,
       "confidence": "high",
       "text": "torch.compile 53.0s: Compile cache miss. Persist the vLLM compile cache directory on a volume shared across restarts."
+    },
+    {
+      "phase": "torch_compile",
+      "observedSecs": 53,
+      "condition": "large compile phase and latency-tolerant workload",
+      "recommendation": "Compilation is large. Consider eager mode if throughput trade-offs are acceptable; this removes compilation but can reduce serving throughput.",
+      "recoverableSecs": 53,
+      "confidence": "low",
+      "tradeoff": "lower throughput",
+      "text": "torch.compile 53.0s: Compilation is large. Consider eager mode if throughput trade-offs are acceptable; this removes compilation but can reduce serving throughput."
     },
     {
       "phase": "cuda_graph",

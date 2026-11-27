@@ -20,6 +20,7 @@ Cases:
 - `tensor-parallel`: slowest worker duration wins
 - `missing-markers`: no logs, explicit unattributed time
 - `first-token-probe`: optional probe extends the timeline
+- `sidecar-istio`: sidecar logs start first; P4 uses the engine container
 
 Regenerate only after reviewing an intentional analyzer/rule change:
 

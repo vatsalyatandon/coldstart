@@ -114,7 +114,7 @@ func Load(customDir string) ([]Pack, error) {
 			if entry.IsDir() || (!strings.HasSuffix(entry.Name(), ".yaml") && !strings.HasSuffix(entry.Name(), ".yml")) {
 				return nil
 			}
-			data, err := os.ReadFile(path)
+			data, err := os.ReadFile(path) // #nosec G304 -- custom rule directories are explicit user input.
 			if err != nil {
 				return err
 			}
