@@ -165,7 +165,7 @@
         },
         {
           "timestamp": "2026-11-27T02:47:09Z",
-          "text": "Downloading model shards from huggingface.co"
+          "text": "Downloading model-00001-of-00002.safetensors from huggingface.co"
         },
         {
           "timestamp": "2026-11-27T02:49:31Z",

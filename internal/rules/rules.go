@@ -307,8 +307,10 @@ func Select(packs []Pack, detection Detection) (Selection, bool) {
 	return Selection{Pack: nearest, Warning: warning}, true
 }
 
-// Match returns the strongest marker for each phase. When tensor-parallel
-// workers each report a duration, the largest reported duration wins.
+// Match applies each phase rule deterministically: the first start marker wins,
+// and the first end marker at or after that start wins. If no start marker
+// exists, an engine-reported duration is used to derive it; otherwise an
+// end-only rule is a point marker. Input lines are sorted by timestamp first.
 func Match(lines []model.LogLine, pack Pack) MatchResult {
 	result := MatchResult{Phases: make(map[string]PhaseMatch), Flags: make(map[string]bool), Attrs: make(map[string]float64)}
 	ids := make([]string, 0, len(pack.Phases))
@@ -338,51 +340,53 @@ func Match(lines []model.LogLine, pack Pack) MatchResult {
 		}
 	}
 
+	timed := make([]model.LogLine, 0, len(lines))
+	for _, line := range lines {
+		if !line.Timestamp.IsZero() {
+			timed = append(timed, line)
+		}
+	}
+	sort.SliceStable(timed, func(i, j int) bool { return timed[i].Timestamp.Before(timed[j].Timestamp) })
+
 	for _, id := range ids {
 		rule := pack.Phases[id]
-		var starts []model.LogLine
-		var ends []endCandidate
-		for _, line := range lines {
-			if line.Timestamp.IsZero() {
-				continue
-			}
-			if rule.startRE != nil && rule.startRE.MatchString(line.Text) {
-				starts = append(starts, line)
-			}
-			if rule.endRE != nil {
-				if match := rule.endRE.FindStringSubmatch(line.Text); match != nil {
-					var secs *float64
-					if rule.DurationFrom != "" {
-						value, err := strconv.ParseFloat(firstNamedValue(match, rule.endRE, rule.DurationFrom), 64)
-						if err == nil {
-							secs = &value
-						}
-					}
-					ends = append(ends, endCandidate{line: line, secs: secs})
+		var start *time.Time
+		if rule.startRE != nil {
+			for _, line := range timed {
+				if rule.startRE.MatchString(line.Text) {
+					start = timePtr(line.Timestamp)
+					break
 				}
 			}
 		}
-		if len(ends) == 0 {
-			continue
-		}
-		best := ends[0]
-		for _, candidate := range ends[1:] {
-			if betterEnd(candidate, best) {
-				best = candidate
-			}
-		}
-		end := timePtr(best.line.Timestamp)
-		var start *time.Time
-		for _, candidate := range starts {
-			if candidate.Timestamp.After(best.line.Timestamp) {
+
+		var end *time.Time
+		var reported *float64
+		for _, line := range timed {
+			if start != nil && line.Timestamp.Before(*start) {
 				continue
 			}
-			if start == nil || candidate.Timestamp.Before(*start) {
-				start = timePtr(candidate.Timestamp)
+			if rule.endRE == nil {
+				continue
 			}
+			match := rule.endRE.FindStringSubmatch(line.Text)
+			if match == nil {
+				continue
+			}
+			end = timePtr(line.Timestamp)
+			if rule.DurationFrom != "" {
+				value, err := strconv.ParseFloat(firstNamedValue(match, rule.endRE, rule.DurationFrom), 64)
+				if err == nil {
+					reported = &value
+				}
+			}
+			break
 		}
-		if start == nil && best.secs != nil {
-			candidate := best.line.Timestamp.Add(-time.Duration(*best.secs * float64(time.Second)))
+		if end == nil {
+			continue
+		}
+		if start == nil && reported != nil {
+			candidate := end.Add(-time.Duration(*reported * float64(time.Second)))
 			start = &candidate
 		}
 		if start == nil {
@@ -392,24 +396,9 @@ func Match(lines []model.LogLine, pack Pack) MatchResult {
 		if end.Before(*start) {
 			continue
 		}
-		result.Phases[id] = PhaseMatch{Start: start, End: end, ReportedSecs: best.secs}
+		result.Phases[id] = PhaseMatch{Start: start, End: end, ReportedSecs: reported}
 	}
 	return result
-}
-
-type endCandidate struct {
-	line model.LogLine
-	secs *float64
-}
-
-func betterEnd(candidate, current endCandidate) bool {
-	if candidate.secs != nil && current.secs != nil && *candidate.secs != *current.secs {
-		return *candidate.secs > *current.secs
-	}
-	if candidate.secs != nil && current.secs == nil {
-		return true
-	}
-	return candidate.line.Timestamp.After(current.line.Timestamp)
 }
 
 func namedValue(match []string, re *regexp.Regexp, name string) string {
