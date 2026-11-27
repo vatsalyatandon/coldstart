@@ -1,0 +1,141 @@
+{
+  "schema": "coldstart/bundle/v1",
+  "source": "fixture",
+  "capturedAt": "2026-11-27T02:44:29Z",
+  "pod": {
+    "metadata": {
+      "name": "qwen3",
+      "namespace": "inference",
+      "creationTimestamp": "2026-11-27T02:41:09Z"
+    },
+    "spec": {
+      "containers": [
+        {
+          "name": "engine",
+          "image": "vllm/vllm-openai:v0.30.0",
+          "resources": {}
+        }
+      ],
+      "nodeName": "gpu-node-1"
+    },
+    "status": {
+      "conditions": [
+        {
+          "type": "PodScheduled",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-27T02:41:19Z"
+        },
+        {
+          "type": "Ready",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-27T02:44:29Z"
+        }
+      ],
+      "containerStatuses": [
+        {
+          "name": "engine",
+          "state": {
+            "running": {
+              "startedAt": "2026-11-27T02:42:49Z"
+            }
+          },
+          "lastState": {
+            "terminated": {
+              "exitCode": 137,
+              "reason": "OOMKilled",
+              "startedAt": "2026-11-27T02:41:29Z",
+              "finishedAt": "2026-11-27T02:42:39Z"
+            }
+          },
+          "ready": true,
+          "restartCount": 1,
+          "image": "",
+          "imageID": ""
+        }
+      ]
+    }
+  },
+  "node": {
+    "metadata": {
+      "name": "gpu-node-1",
+      "creationTimestamp": "2026-11-27T01:41:09Z",
+      "labels": {
+        "nvidia.com/gpu.product": "NVIDIA H100 80GB HBM3"
+      }
+    },
+    "spec": {},
+    "status": {
+      "allocatable": {
+        "nvidia.com/gpu": "1"
+      },
+      "conditions": [
+        {
+          "type": "Ready",
+          "status": "True",
+          "lastHeartbeatTime": null,
+          "lastTransitionTime": "2026-11-27T01:42:49Z"
+        }
+      ],
+      "daemonEndpoints": {
+        "kubeletEndpoint": {
+          "Port": 0
+        }
+      },
+      "nodeInfo": {
+        "machineID": "",
+        "systemUUID": "",
+        "bootID": "",
+        "kernelVersion": "",
+        "osImage": "",
+        "containerRuntimeVersion": "",
+        "kubeletVersion": "",
+        "kubeProxyVersion": "",
+        "operatingSystem": "",
+        "architecture": ""
+      }
+    }
+  },
+  "logs": [
+    {
+      "container": "engine",
+      "lines": [
+        {
+          "timestamp": "2026-11-27T02:42:49Z",
+          "text": "vLLM API server version 0.30.0"
+        },
+        {
+          "timestamp": "2026-11-27T02:42:49Z",
+          "text": "Loading weights"
+        },
+        {
+          "timestamp": "2026-11-27T02:43:19Z",
+          "text": "Loading weights took 30 seconds"
+        },
+        {
+          "timestamp": "2026-11-27T02:43:49Z",
+          "text": "Application startup complete"
+        }
+      ]
+    },
+    {
+      "container": "engine",
+      "previous": true,
+      "lines": [
+        {
+          "timestamp": "2026-11-27T02:41:29Z",
+          "text": "vLLM API server version 0.30.0"
+        },
+        {
+          "timestamp": "2026-11-27T02:42:29Z",
+          "text": "CUDA out of memory"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "case": "crash-loop",
+    "fixture": "synthetic"
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "schema": "coldstart/v1",
+  "pod": "inference/qwen3",
+  "engine": {
+    "name": "vllm",
+    "version": "0.30.0",
+    "container": "engine",
+    "rulePack": "embedded/vllm/ge0.11-lt0.40.yaml"
+  },
+  "hardware": {
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "count": 1,
+    "node": "gpu-node-1",
+    "nodeFresh": false
+  },
+  "t0": "2026-11-27T02:41:09Z",
+  "readyAt": "2026-11-27T02:44:29Z",
+  "endAt": "2026-11-27T02:44:29Z",
+  "totalSecs": 200,
+  "phases": [
+    {
+      "id": "scheduling_wait",
+      "name": "scheduling wait",
+      "start": "2026-11-27T02:41:09Z",
+      "end": "2026-11-27T02:42:11Z",
+      "secs": 62,
+      "source": "status",
+      "confidence": "high"
+    },
+    {
+      "id": "unattributed",
+      "name": "unattributed",
+      "start": "2026-11-27T02:42:11Z",
+      "end": "2026-11-27T02:44:29Z",
+      "secs": 138,
+      "source": "gap",
+      "confidence": "low",
+      "attrs": {
+        "reason": "no matching marker"
+      }
+    }
+  ],
+  "attempts": [
+    {
+      "index": 0,
+      "outcome": "ready",
+      "start": "2026-11-27T02:41:09Z",
+      "end": "2026-11-27T02:44:29Z",
+      "phases": [
+        {
+          "id": "scheduling_wait",
+          "name": "scheduling wait",
+          "start": "2026-11-27T02:41:09Z",
+          "end": "2026-11-27T02:42:11Z",
+          "secs": 62,
+          "source": "status",
+          "confidence": "high"
+        },
+        {
+          "id": "unattributed",
+          "name": "unattributed",
+          "start": "2026-11-27T02:42:11Z",
+          "end": "2026-11-27T02:44:29Z",
+          "secs": 138,
+          "source": "gap",
+          "confidence": "low",
+          "attrs": {
+            "reason": "no matching marker"
+          }
+        }
+      ]
+    }
+  ],
+  "unattributedSecs": 138,
+  "findings": [
+    {
+      "phase": "unattributed",
+      "observedSecs": 138,
+      "condition": "more than 10% of startup has no matching marker",
+      "recommendation": "Gap not explained. Capture a reproducible bundle with `-o bundle` and open an issue.",
+      "recoverableSecs": 0,
+      "confidence": "low",
+      "text": "unattributed 138.0s: Gap not explained. Capture a reproducible bundle with `-o bundle` and open an issue."
+    }
+  ],
+  "warnings": [
+    "more than 10% of startup is unattributed; capture a bundle with -o bundle for investigation"
+  ],
+  "rulePack": {
+    "engine": "vllm",
+    "version": "\u003e=0.11,\u003c0.40",
+    "path": "embedded/vllm/ge0.11-lt0.40.yaml"
+  },
+  "capturedAt": "2026-11-27T02:44:29Z"
+}

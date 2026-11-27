@@ -1,0 +1,54 @@
+engine: sglang
+versions: ">=0.4"
+detect:
+  - '(?i)SGLang.*version (?P<version>\S+)'
+  - '(?i)(SGLangEngine|SGLang server|Launching SGLang|The server is fired up and ready to roll)'
+phases:
+  weights_download:
+    start: '(?i)(Downloading|Fetching|snapshot_download|hf_hub_download|Loading checkpoint shards)'
+    end: '(?i)(Load weight start|Loading weights(?:\.\.\.| \(|$))'
+  weights_load:
+    start: '(?i)(Load weight start|Loading weights(?:\.\.\.| \(|$))'
+    end: '(?i)(Load weight end\. elapsed=(?P<secs>[\d.]+) s|Loading weights took (?P<secs2>[\d.]+) seconds)'
+    duration_from: secs
+  torch_compile:
+    start: '(?i)(torch\.compile(?:\.\.\.| \(|$)|Compiling|compile graph)'
+    end: '(?i)(torch\.compile takes [*\s]*(?P<secs>[\d.]+) s|Compilation finished in (?P<secs2>[\d.]+) s)'
+    duration_from: secs
+  cuda_graph:
+    start: '(?i)(Capture cuda graph start|Capturing CUDA graphs|Capture cuda graph(?:\.\.\.| \(|:|$))'
+    end: 'Capture cuda graph end\. Time elapsed: (?P<secs>[\d.]+) s'
+    duration_from: secs
+  engine_init:
+    end: '(?i)(max_total_num_tokens=.*|Engine initialization .* took (?P<secs>[\d.]+))'
+  server_ready:
+    end: '(?i)(The server is fired up and ready to roll|Application startup complete|Uvicorn running)'
+flags:
+  compile_cache_hit: '(?i)(load.*cache|cache hit)'
+  compile_cache_miss: '(?i)(cache miss|compiling.*cache)'
+  weights_remote_download: '(?i)(huggingface\.co|hf_hub_download|snapshot_download|Downloading.*(?:safetensors|model)|Fetching.*(?:safetensors|model))'
+  eager_mode_available: '(?i)(disable_cuda_graph|disable-cuda-graph)'
+  oom: '(?i)(out of memory|OOMKilled|CUDA out of memory)'
+attrs:
+  weights_bytes:
+    pattern: 'Load weight end\. elapsed=[\d.]+ s.*mem usage=(?P<value>[\d.]+) GB'
+    multiplier: 1000000000
+recommendations:
+  compile_cache_miss:
+    text: 'Compile cache miss. Persist the SGLang compilation cache directory on a volume shared across restarts.'
+    confidence: high
+  compile_large_eager:
+    text: 'Compilation is large. Consider disabling CUDA graphs or compilation if serving throughput trade-offs are acceptable.'
+    confidence: low
+  cuda_graph_large:
+    text: 'CUDA graph capture is large. Reduce the number of captured batch sizes.'
+    confidence: low
+  weights_remote_download:
+    text: 'Weights were fetched from a remote hub during startup. Pre-stage them to a PVC or node-local NVMe, or use a streaming loader.'
+    confidence: high
+  weights_load_slow:
+    text: 'Weight-load throughput is below the storage reference. Check network PV versus local NVMe, prefer safetensors, and evaluate a streaming loader.'
+    confidence: medium
+  oom:
+    text: 'The engine failed with an out-of-memory error. Reduce memory settings before retrying startup.'
+    confidence: high

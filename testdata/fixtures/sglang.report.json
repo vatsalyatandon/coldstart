@@ -1,0 +1,187 @@
+{
+  "schema": "coldstart/v1",
+  "pod": "inference/qwen3",
+  "engine": {
+    "name": "sglang",
+    "version": "0.4.0",
+    "container": "sglang",
+    "rulePack": "embedded/sglang/ge0.4.yaml"
+  },
+  "hardware": {
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "count": 1,
+    "node": "gpu-node-1",
+    "nodeFresh": false
+  },
+  "t0": "2026-11-27T02:41:09Z",
+  "readyAt": "2026-11-27T02:42:29Z",
+  "endAt": "2026-11-27T02:42:29Z",
+  "totalSecs": 80,
+  "phases": [
+    {
+      "id": "scheduling_wait",
+      "name": "scheduling wait",
+      "start": "2026-11-27T02:41:09Z",
+      "end": "2026-11-27T02:41:19Z",
+      "secs": 10,
+      "source": "status",
+      "confidence": "high"
+    },
+    {
+      "id": "framework_bootstrap",
+      "name": "framework bootstrap",
+      "start": "2026-11-27T02:41:19Z",
+      "end": "2026-11-27T02:41:29Z",
+      "secs": 10,
+      "source": "log",
+      "confidence": "high"
+    },
+    {
+      "id": "weights_load",
+      "name": "weights load",
+      "start": "2026-11-27T02:41:29Z",
+      "end": "2026-11-27T02:41:49Z",
+      "secs": 20,
+      "source": "log",
+      "confidence": "high",
+      "attrs": {
+        "engine_reported_secs": 20,
+        "storage": ""
+      }
+    },
+    {
+      "id": "cuda_graph",
+      "name": "CUDA graph capture",
+      "start": "2026-11-27T02:41:49Z",
+      "end": "2026-11-27T02:41:52Z",
+      "secs": 3,
+      "source": "log",
+      "confidence": "high",
+      "attrs": {
+        "engine_reported_secs": 3
+      }
+    },
+    {
+      "id": "kv_cache_warmup",
+      "name": "KV cache / warmup",
+      "start": "2026-11-27T02:41:52Z",
+      "end": "2026-11-27T02:41:54Z",
+      "secs": 2,
+      "source": "log",
+      "confidence": "medium"
+    },
+    {
+      "id": "api_server_up",
+      "name": "API server up",
+      "start": "2026-11-27T02:41:54Z",
+      "end": "2026-11-27T02:41:59Z",
+      "secs": 5,
+      "source": "log",
+      "confidence": "high"
+    },
+    {
+      "id": "readiness_lag",
+      "name": "readiness lag",
+      "start": "2026-11-27T02:41:59Z",
+      "end": "2026-11-27T02:42:29Z",
+      "secs": 30,
+      "source": "log+status",
+      "confidence": "high",
+      "attrs": {
+        "probe_period_secs": 30
+      }
+    }
+  ],
+  "attempts": [
+    {
+      "index": 0,
+      "outcome": "ready",
+      "start": "2026-11-27T02:41:09Z",
+      "end": "2026-11-27T02:42:29Z",
+      "phases": [
+        {
+          "id": "scheduling_wait",
+          "name": "scheduling wait",
+          "start": "2026-11-27T02:41:09Z",
+          "end": "2026-11-27T02:41:19Z",
+          "secs": 10,
+          "source": "status",
+          "confidence": "high"
+        },
+        {
+          "id": "framework_bootstrap",
+          "name": "framework bootstrap",
+          "start": "2026-11-27T02:41:19Z",
+          "end": "2026-11-27T02:41:29Z",
+          "secs": 10,
+          "source": "log",
+          "confidence": "high"
+        },
+        {
+          "id": "weights_load",
+          "name": "weights load",
+          "start": "2026-11-27T02:41:29Z",
+          "end": "2026-11-27T02:41:49Z",
+          "secs": 20,
+          "source": "log",
+          "confidence": "high",
+          "attrs": {
+            "engine_reported_secs": 20,
+            "storage": ""
+          }
+        },
+        {
+          "id": "cuda_graph",
+          "name": "CUDA graph capture",
+          "start": "2026-11-27T02:41:49Z",
+          "end": "2026-11-27T02:41:52Z",
+          "secs": 3,
+          "source": "log",
+          "confidence": "high",
+          "attrs": {
+            "engine_reported_secs": 3
+          }
+        },
+        {
+          "id": "kv_cache_warmup",
+          "name": "KV cache / warmup",
+          "start": "2026-11-27T02:41:52Z",
+          "end": "2026-11-27T02:41:54Z",
+          "secs": 2,
+          "source": "log",
+          "confidence": "medium"
+        },
+        {
+          "id": "api_server_up",
+          "name": "API server up",
+          "start": "2026-11-27T02:41:54Z",
+          "end": "2026-11-27T02:41:59Z",
+          "secs": 5,
+          "source": "log",
+          "confidence": "high"
+        },
+        {
+          "id": "readiness_lag",
+          "name": "readiness lag",
+          "start": "2026-11-27T02:41:59Z",
+          "end": "2026-11-27T02:42:29Z",
+          "secs": 30,
+          "source": "log+status",
+          "confidence": "high",
+          "attrs": {
+            "probe_period_secs": 30
+          }
+        }
+      ]
+    }
+  ],
+  "unattributedSecs": 0,
+  "findings": null,
+  "warnings": null,
+  "rulePack": {
+    "engine": "sglang",
+    "version": "\u003e=0.4",
+    "path": "embedded/sglang/ge0.4.yaml"
+  },
+  "capturedAt": "2026-11-27T02:42:29Z"
+}

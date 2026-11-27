@@ -1,0 +1,196 @@
+{
+  "schema": "coldstart/v1",
+  "pod": "inference/qwen3",
+  "engine": {
+    "name": "vllm",
+    "version": "0.30.0",
+    "container": "engine",
+    "rulePack": "embedded/vllm/ge0.11-lt0.40.yaml"
+  },
+  "hardware": {
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "count": 1,
+    "node": "gpu-node-1",
+    "nodeFresh": false
+  },
+  "t0": "2026-11-27T02:41:09Z",
+  "readyAt": "2026-11-27T02:44:29Z",
+  "endAt": "2026-11-27T02:44:29Z",
+  "totalSecs": 200,
+  "phases": [
+    {
+      "id": "scheduling_wait",
+      "name": "scheduling wait",
+      "start": "2026-11-27T02:41:09Z",
+      "end": "2026-11-27T02:41:19Z",
+      "secs": 10,
+      "source": "status",
+      "confidence": "high"
+    },
+    {
+      "id": "unattributed",
+      "name": "unattributed",
+      "start": "2026-11-27T02:41:19Z",
+      "end": "2026-11-27T02:41:29Z",
+      "secs": 10,
+      "source": "gap",
+      "confidence": "low",
+      "attrs": {
+        "reason": "no matching marker"
+      }
+    },
+    {
+      "id": "restart_attempt",
+      "name": "failed attempt / crash",
+      "start": "2026-11-27T02:41:29Z",
+      "end": "2026-11-27T02:42:39Z",
+      "secs": 70,
+      "source": "status",
+      "confidence": "high",
+      "attrs": {
+        "exit_code": 137,
+        "reason": "OOMKilled"
+      }
+    },
+    {
+      "id": "unattributed",
+      "name": "unattributed",
+      "start": "2026-11-27T02:42:39Z",
+      "end": "2026-11-27T02:42:49Z",
+      "secs": 10,
+      "source": "gap",
+      "confidence": "low",
+      "attrs": {
+        "reason": "no matching marker"
+      }
+    },
+    {
+      "id": "weights_load",
+      "name": "weights load",
+      "start": "2026-11-27T02:42:49Z",
+      "end": "2026-11-27T02:43:19Z",
+      "secs": 30,
+      "source": "log",
+      "confidence": "high",
+      "attrs": {
+        "engine_reported_secs": 30,
+        "storage": ""
+      }
+    },
+    {
+      "id": "api_server_up",
+      "name": "API server up",
+      "start": "2026-11-27T02:43:19Z",
+      "end": "2026-11-27T02:43:49Z",
+      "secs": 30,
+      "source": "log",
+      "confidence": "high"
+    },
+    {
+      "id": "readiness_lag",
+      "name": "readiness lag",
+      "start": "2026-11-27T02:43:49Z",
+      "end": "2026-11-27T02:44:29Z",
+      "secs": 40,
+      "source": "log+status",
+      "confidence": "high",
+      "attrs": {
+        "probe_period_secs": 30
+      }
+    }
+  ],
+  "attempts": [
+    {
+      "index": 0,
+      "outcome": "failed",
+      "start": "2026-11-27T02:41:29Z",
+      "end": "2026-11-27T02:42:39Z",
+      "crashReason": "OOMKilled",
+      "lostSecs": 70,
+      "phases": [
+        {
+          "id": "unattributed",
+          "name": "unattributed",
+          "start": "2026-11-27T02:41:29Z",
+          "end": "2026-11-27T02:42:39Z",
+          "secs": 70,
+          "source": "gap",
+          "confidence": "low",
+          "attrs": {
+            "reason": "no matching marker"
+          }
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "outcome": "ready",
+      "start": "2026-11-27T02:42:49Z",
+      "end": "2026-11-27T02:44:29Z",
+      "phases": [
+        {
+          "id": "weights_load",
+          "name": "weights load",
+          "start": "2026-11-27T02:42:49Z",
+          "end": "2026-11-27T02:43:19Z",
+          "secs": 30,
+          "source": "log",
+          "confidence": "high",
+          "attrs": {
+            "engine_reported_secs": 30,
+            "storage": ""
+          }
+        },
+        {
+          "id": "api_server_up",
+          "name": "API server up",
+          "start": "2026-11-27T02:43:19Z",
+          "end": "2026-11-27T02:43:49Z",
+          "secs": 30,
+          "source": "log",
+          "confidence": "high"
+        },
+        {
+          "id": "readiness_lag",
+          "name": "readiness lag",
+          "start": "2026-11-27T02:43:49Z",
+          "end": "2026-11-27T02:44:29Z",
+          "secs": 40,
+          "source": "log+status",
+          "confidence": "high",
+          "attrs": {
+            "probe_period_secs": 30
+          }
+        }
+      ]
+    }
+  ],
+  "unattributedSecs": 20,
+  "findings": [
+    {
+      "phase": "restart_attempt",
+      "observedSecs": 70,
+      "condition": "one or more startup attempts failed: OOMKilled",
+      "recommendation": "The engine failed with an out-of-memory error. Reduce KV-cache or model memory settings before retrying startup.",
+      "recoverableSecs": 70,
+      "confidence": "high",
+      "text": "failed startup attempts 70.0s: The engine failed with an out-of-memory error. Reduce KV-cache or model memory settings before retrying startup."
+    },
+    {
+      "phase": "readiness_lag",
+      "observedSecs": 40,
+      "condition": "readiness lag exceeds one 30-second probe period",
+      "recommendation": "Use a startupProbe and shorten readiness periodSeconds once the server has started.",
+      "recoverableSecs": 10,
+      "confidence": "high",
+      "text": "readiness lag 40.0s: Use a startupProbe and shorten readiness periodSeconds once the server has started."
+    }
+  ],
+  "warnings": null,
+  "rulePack": {
+    "engine": "vllm",
+    "version": "\u003e=0.11,\u003c0.40",
+    "path": "embedded/vllm/ge0.11-lt0.40.yaml"
+  },
+  "capturedAt": "2026-11-27T02:44:29Z"
+}

@@ -1,0 +1,148 @@
+{
+  "schema": "coldstart/bundle/v1",
+  "source": "fixture",
+  "capturedAt": "2026-11-27T02:44:29Z",
+  "pod": {
+    "metadata": {
+      "name": "qwen3",
+      "namespace": "inference",
+      "creationTimestamp": "2026-11-27T02:41:09Z"
+    },
+    "spec": {
+      "containers": [
+        {
+          "name": "engine",
+          "image": "vllm/vllm-openai:v0.30.0",
+          "resources": {}
+        }
+      ],
+      "nodeName": "gpu-node-1"
+    },
+    "status": {
+      "conditions": [
+        {
+          "type": "PodScheduled",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-27T02:41:19Z"
+        },
+        {
+          "type": "Ready",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-27T02:44:29Z"
+        }
+      ],
+      "containerStatuses": [
+        {
+          "name": "engine",
+          "state": {
+            "running": {
+              "startedAt": "2026-11-27T02:41:39Z"
+            }
+          },
+          "lastState": {},
+          "ready": true,
+          "restartCount": 0,
+          "image": "",
+          "imageID": ""
+        }
+      ]
+    }
+  },
+  "node": {
+    "metadata": {
+      "name": "gpu-node-1",
+      "creationTimestamp": "2026-11-27T01:41:09Z",
+      "labels": {
+        "nvidia.com/gpu.product": "NVIDIA H100 80GB HBM3"
+      }
+    },
+    "spec": {},
+    "status": {
+      "allocatable": {
+        "nvidia.com/gpu": "1"
+      },
+      "conditions": [
+        {
+          "type": "Ready",
+          "status": "True",
+          "lastHeartbeatTime": null,
+          "lastTransitionTime": "2026-11-27T01:42:49Z"
+        }
+      ],
+      "daemonEndpoints": {
+        "kubeletEndpoint": {
+          "Port": 0
+        }
+      },
+      "nodeInfo": {
+        "machineID": "",
+        "systemUUID": "",
+        "bootID": "",
+        "kernelVersion": "",
+        "osImage": "",
+        "containerRuntimeVersion": "",
+        "kubeletVersion": "",
+        "kubeProxyVersion": "",
+        "operatingSystem": "",
+        "architecture": ""
+      }
+    }
+  },
+  "logs": [
+    {
+      "container": "engine",
+      "lines": [
+        {
+          "timestamp": "2026-11-27T02:41:39Z",
+          "text": "vLLM API server version 0.30.0"
+        },
+        {
+          "timestamp": "2026-11-27T02:41:39Z",
+          "text": "Loading weights"
+        },
+        {
+          "timestamp": "2026-11-27T02:42:09Z",
+          "text": "Loading weights took 30 seconds"
+        },
+        {
+          "timestamp": "2026-11-27T02:42:09Z",
+          "text": "Directly load the compiled graph from the cache"
+        },
+        {
+          "timestamp": "2026-11-27T02:42:39Z",
+          "text": "torch.compile takes **30 s** in total"
+        },
+        {
+          "timestamp": "2026-11-27T02:42:39Z",
+          "text": "Graph capturing"
+        },
+        {
+          "timestamp": "2026-11-27T02:42:49Z",
+          "text": "Graph capturing finished in 10 secs"
+        },
+        {
+          "timestamp": "2026-11-27T02:42:59Z",
+          "text": "init engine (profile, create kv cache, warmup model) took 10 seconds"
+        },
+        {
+          "timestamp": "2026-11-27T02:43:09Z",
+          "text": "Application startup complete"
+        }
+      ]
+    }
+  ],
+  "probe": {
+    "endpoint": "/v1/completions",
+    "model": "test-model",
+    "requestSentAt": "2026-11-27T02:44:29Z",
+    "firstTokenAt": "2026-11-27T02:44:29.4Z",
+    "firstToken": "Hello",
+    "statusCode": 200
+  },
+  "metadata": {
+    "case": "first-token-probe",
+    "fixture": "synthetic"
+  }
+}

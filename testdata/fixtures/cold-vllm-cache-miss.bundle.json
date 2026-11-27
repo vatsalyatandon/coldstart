@@ -1,0 +1,209 @@
+{
+  "schema": "coldstart/bundle/v1",
+  "source": "fixture",
+  "capturedAt": "2026-11-27T02:52:14Z",
+  "pod": {
+    "metadata": {
+      "name": "qwen3",
+      "namespace": "inference",
+      "creationTimestamp": "2026-11-27T02:41:09Z"
+    },
+    "spec": {
+      "initContainers": [
+        {
+          "name": "weights",
+          "args": [
+            "snapshot_download",
+            "https://huggingface.co/Qwen/test"
+          ],
+          "resources": {}
+        }
+      ],
+      "containers": [
+        {
+          "name": "engine",
+          "image": "vllm/vllm-openai:v0.30.0",
+          "resources": {}
+        }
+      ],
+      "nodeName": "gpu-node-1"
+    },
+    "status": {
+      "conditions": [
+        {
+          "type": "PodScheduled",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-27T02:42:11Z"
+        },
+        {
+          "type": "Ready",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-27T02:52:14Z"
+        }
+      ],
+      "initContainerStatuses": [
+        {
+          "name": "weights",
+          "state": {
+            "terminated": {
+              "exitCode": 0,
+              "startedAt": "2026-11-27T02:44:09Z",
+              "finishedAt": "2026-11-27T02:47:00Z"
+            }
+          },
+          "lastState": {},
+          "ready": false,
+          "restartCount": 0,
+          "image": "",
+          "imageID": ""
+        }
+      ],
+      "containerStatuses": [
+        {
+          "name": "engine",
+          "state": {
+            "running": {
+              "startedAt": "2026-11-27T02:47:00Z"
+            }
+          },
+          "lastState": {},
+          "ready": true,
+          "restartCount": 0,
+          "image": "",
+          "imageID": ""
+        }
+      ]
+    }
+  },
+  "node": {
+    "metadata": {
+      "name": "gpu-node-1",
+      "creationTimestamp": "2026-11-27T02:41:14Z",
+      "labels": {
+        "nvidia.com/gpu.product": "NVIDIA H100 80GB HBM3"
+      }
+    },
+    "spec": {},
+    "status": {
+      "allocatable": {
+        "nvidia.com/gpu": "1"
+      },
+      "conditions": [
+        {
+          "type": "Ready",
+          "status": "True",
+          "lastHeartbeatTime": null,
+          "lastTransitionTime": "2026-11-27T02:41:50Z"
+        }
+      ],
+      "daemonEndpoints": {
+        "kubeletEndpoint": {
+          "Port": 0
+        }
+      },
+      "nodeInfo": {
+        "machineID": "",
+        "systemUUID": "",
+        "bootID": "",
+        "kernelVersion": "",
+        "osImage": "",
+        "containerRuntimeVersion": "",
+        "kubeletVersion": "",
+        "kubeProxyVersion": "",
+        "operatingSystem": "",
+        "architecture": ""
+      }
+    }
+  },
+  "events": [
+    {
+      "metadata": {},
+      "involvedObject": {},
+      "reason": "TriggeredScaleUp",
+      "message": "Triggered scale up",
+      "source": {},
+      "firstTimestamp": null,
+      "lastTimestamp": null,
+      "eventTime": "2026-11-27T02:41:14.000000Z",
+      "reportingComponent": "",
+      "reportingInstance": ""
+    },
+    {
+      "metadata": {},
+      "involvedObject": {},
+      "reason": "Pulling",
+      "message": "Pulling image \"vllm/vllm-openai:v0.30.0\"",
+      "source": {},
+      "firstTimestamp": null,
+      "lastTimestamp": null,
+      "eventTime": "2026-11-27T02:42:11.000000Z",
+      "reportingComponent": "",
+      "reportingInstance": ""
+    },
+    {
+      "metadata": {},
+      "involvedObject": {},
+      "reason": "Pulled",
+      "message": "Successfully pulled image \"vllm/vllm-openai:v0.30.0\" in 1m58s (11.2 GB)",
+      "source": {},
+      "firstTimestamp": null,
+      "lastTimestamp": null,
+      "eventTime": "2026-11-27T02:44:09.000000Z",
+      "reportingComponent": "",
+      "reportingInstance": ""
+    }
+  ],
+  "logs": [
+    {
+      "container": "engine",
+      "lines": [
+        {
+          "timestamp": "2026-11-27T02:47:00Z",
+          "text": "vLLM API server version 0.30.0"
+        },
+        {
+          "timestamp": "2026-11-27T02:47:09Z",
+          "text": "Downloading model shards from huggingface.co"
+        },
+        {
+          "timestamp": "2026-11-27T02:49:31Z",
+          "text": "Loading weights"
+        },
+        {
+          "timestamp": "2026-11-27T02:50:00Z",
+          "text": "Loading weights took 29 seconds"
+        },
+        {
+          "timestamp": "2026-11-27T02:50:00Z",
+          "text": "torch.compile cache miss; Compiling"
+        },
+        {
+          "timestamp": "2026-11-27T02:50:53Z",
+          "text": "torch.compile takes **53.00 s** in total"
+        },
+        {
+          "timestamp": "2026-11-27T02:50:53Z",
+          "text": "Graph capturing"
+        },
+        {
+          "timestamp": "2026-11-27T02:51:14Z",
+          "text": "Graph capturing finished in 21 secs, took 1.17 GiB"
+        },
+        {
+          "timestamp": "2026-11-27T02:51:26Z",
+          "text": "init engine (profile, create kv cache, warmup model) took 12 seconds"
+        },
+        {
+          "timestamp": "2026-11-27T02:51:50Z",
+          "text": "Application startup complete"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "case": "cold-vllm-cache-miss",
+    "fixture": "synthetic"
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "schema": "coldstart/bundle/v1",
+  "source": "fixture",
+  "capturedAt": "2026-11-27T02:44:29Z",
+  "pod": {
+    "metadata": {
+      "name": "qwen3",
+      "namespace": "inference",
+      "creationTimestamp": "2026-11-27T02:41:09Z"
+    },
+    "spec": {
+      "containers": [
+        {
+          "name": "engine",
+          "image": "vllm/vllm-openai:v0.30.0",
+          "resources": {}
+        }
+      ],
+      "nodeName": "gpu-node-1"
+    },
+    "status": {
+      "conditions": [
+        {
+          "type": "PodScheduled",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-27T02:42:11Z"
+        },
+        {
+          "type": "Ready",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-27T02:44:29Z"
+        }
+      ],
+      "containerStatuses": [
+        {
+          "name": "engine",
+          "state": {
+            "running": {
+              "startedAt": null
+            }
+          },
+          "lastState": {},
+          "ready": true,
+          "restartCount": 0,
+          "image": "",
+          "imageID": ""
+        }
+      ]
+    }
+  },
+  "node": {
+    "metadata": {
+      "name": "gpu-node-1",
+      "creationTimestamp": "2026-11-27T01:41:09Z",
+      "labels": {
+        "nvidia.com/gpu.product": "NVIDIA H100 80GB HBM3"
+      }
+    },
+    "spec": {},
+    "status": {
+      "allocatable": {
+        "nvidia.com/gpu": "1"
+      },
+      "conditions": [
+        {
+          "type": "Ready",
+          "status": "True",
+          "lastHeartbeatTime": null,
+          "lastTransitionTime": "2026-11-27T01:42:49Z"
+        }
+      ],
+      "daemonEndpoints": {
+        "kubeletEndpoint": {
+          "Port": 0
+        }
+      },
+      "nodeInfo": {
+        "machineID": "",
+        "systemUUID": "",
+        "bootID": "",
+        "kernelVersion": "",
+        "osImage": "",
+        "containerRuntimeVersion": "",
+        "kubeletVersion": "",
+        "kubeProxyVersion": "",
+        "operatingSystem": "",
+        "architecture": ""
+      }
+    }
+  },
+  "metadata": {
+    "case": "missing-markers",
+    "fixture": "synthetic"
+  }
+}

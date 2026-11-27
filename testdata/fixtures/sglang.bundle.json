@@ -1,0 +1,132 @@
+{
+  "schema": "coldstart/bundle/v1",
+  "source": "fixture",
+  "capturedAt": "2026-11-27T02:42:29Z",
+  "pod": {
+    "metadata": {
+      "name": "qwen3",
+      "namespace": "inference",
+      "creationTimestamp": "2026-11-27T02:41:09Z"
+    },
+    "spec": {
+      "containers": [
+        {
+          "name": "sglang",
+          "image": "lmsysorg/sglang:v0.4.0",
+          "resources": {}
+        }
+      ],
+      "nodeName": "gpu-node-1"
+    },
+    "status": {
+      "conditions": [
+        {
+          "type": "PodScheduled",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-27T02:41:19Z"
+        },
+        {
+          "type": "Ready",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-27T02:42:29Z"
+        }
+      ],
+      "containerStatuses": [
+        {
+          "name": "sglang",
+          "state": {
+            "running": {
+              "startedAt": "2026-11-27T02:41:19Z"
+            }
+          },
+          "lastState": {},
+          "ready": true,
+          "restartCount": 0,
+          "image": "",
+          "imageID": ""
+        }
+      ]
+    }
+  },
+  "node": {
+    "metadata": {
+      "name": "gpu-node-1",
+      "creationTimestamp": "2026-11-27T01:41:09Z",
+      "labels": {
+        "nvidia.com/gpu.product": "NVIDIA H100 80GB HBM3"
+      }
+    },
+    "spec": {},
+    "status": {
+      "allocatable": {
+        "nvidia.com/gpu": "1"
+      },
+      "conditions": [
+        {
+          "type": "Ready",
+          "status": "True",
+          "lastHeartbeatTime": null,
+          "lastTransitionTime": "2026-11-27T01:42:49Z"
+        }
+      ],
+      "daemonEndpoints": {
+        "kubeletEndpoint": {
+          "Port": 0
+        }
+      },
+      "nodeInfo": {
+        "machineID": "",
+        "systemUUID": "",
+        "bootID": "",
+        "kernelVersion": "",
+        "osImage": "",
+        "containerRuntimeVersion": "",
+        "kubeletVersion": "",
+        "kubeProxyVersion": "",
+        "operatingSystem": "",
+        "architecture": ""
+      }
+    }
+  },
+  "logs": [
+    {
+      "container": "sglang",
+      "lines": [
+        {
+          "timestamp": "2026-11-27T02:41:19Z",
+          "text": "(SGLangEngine pid=1)"
+        },
+        {
+          "timestamp": "2026-11-27T02:41:29Z",
+          "text": "Load weight start"
+        },
+        {
+          "timestamp": "2026-11-27T02:41:49Z",
+          "text": "Load weight end. elapsed=20.00 s, type=Qwen3ForCausalLM"
+        },
+        {
+          "timestamp": "2026-11-27T02:41:49Z",
+          "text": "Capture cuda graph start"
+        },
+        {
+          "timestamp": "2026-11-27T02:41:52Z",
+          "text": "Capture cuda graph end. Time elapsed: 3.00 s."
+        },
+        {
+          "timestamp": "2026-11-27T02:41:54Z",
+          "text": "max_total_num_tokens=712400"
+        },
+        {
+          "timestamp": "2026-11-27T02:41:59Z",
+          "text": "The server is fired up and ready to roll!"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "case": "sglang",
+    "fixture": "synthetic"
+  }
+}

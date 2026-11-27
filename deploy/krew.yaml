@@ -1,0 +1,56 @@
+apiVersion: krew.googlecontainertools.github.com/v1alpha2
+kind: Plugin
+metadata:
+  name: coldstart
+spec:
+  version: v0.1.0
+  homepage: https://github.com/vatsalyatandon/coldstart
+  shortDescription: Explain where LLM pod startup time went
+  description: |
+    Builds a per-phase startup timeline for a vLLM or SGLang Kubernetes pod
+    from pod/node state, events, logs, and an optional first-token probe.
+    Produces ranked, concrete recommendations and redacted replay bundles.
+  caveats: |
+    Read-only RBAC is sufficient unless --probe is used, which additionally
+    requires create on pods/portforward.
+  platforms:
+    - selector:
+        matchLabels:
+          os: darwin
+          arch: arm64
+      uri: https://github.com/vatsalyatandon/coldstart/releases/download/v0.1.0/coldstart_v0.1.0_darwin_arm64.tar.gz
+      sha256: REPLACE_WITH_RELEASE_SHA256
+      bin: kubectl-coldstart
+      files:
+        - from: kubectl-coldstart
+          to: .
+    - selector:
+        matchLabels:
+          os: darwin
+          arch: amd64
+      uri: https://github.com/vatsalyatandon/coldstart/releases/download/v0.1.0/coldstart_v0.1.0_darwin_amd64.tar.gz
+      sha256: REPLACE_WITH_RELEASE_SHA256
+      bin: kubectl-coldstart
+      files:
+        - from: kubectl-coldstart
+          to: .
+    - selector:
+        matchLabels:
+          os: linux
+          arch: arm64
+      uri: https://github.com/vatsalyatandon/coldstart/releases/download/v0.1.0/coldstart_v0.1.0_linux_arm64.tar.gz
+      sha256: REPLACE_WITH_RELEASE_SHA256
+      bin: kubectl-coldstart
+      files:
+        - from: kubectl-coldstart
+          to: .
+    - selector:
+        matchLabels:
+          os: linux
+          arch: amd64
+      uri: https://github.com/vatsalyatandon/coldstart/releases/download/v0.1.0/coldstart_v0.1.0_linux_amd64.tar.gz
+      sha256: REPLACE_WITH_RELEASE_SHA256
+      bin: kubectl-coldstart
+      files:
+        - from: kubectl-coldstart
+          to: .

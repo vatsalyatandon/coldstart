@@ -1,0 +1,360 @@
+{
+  "schema": "coldstart/v1",
+  "pod": "inference/qwen3",
+  "engine": {
+    "name": "vllm",
+    "version": "0.30.0",
+    "container": "engine",
+    "rulePack": "embedded/vllm/ge0.11-lt0.40.yaml"
+  },
+  "hardware": {
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "count": 1,
+    "node": "gpu-node-1",
+    "nodeFresh": true
+  },
+  "t0": "2026-11-27T02:41:09Z",
+  "readyAt": "2026-11-27T02:52:14Z",
+  "endAt": "2026-11-27T02:52:14Z",
+  "totalSecs": 665,
+  "phases": [
+    {
+      "id": "scheduling_wait",
+      "name": "scheduling wait",
+      "start": "2026-11-27T02:41:09Z",
+      "end": "2026-11-27T02:41:14Z",
+      "secs": 5,
+      "source": "status",
+      "confidence": "high"
+    },
+    {
+      "id": "node_provisioning",
+      "name": "↳ node provisioning",
+      "parentId": "scheduling_wait",
+      "start": "2026-11-27T02:41:14Z",
+      "end": "2026-11-27T02:41:50Z",
+      "secs": 36,
+      "source": "event+node",
+      "confidence": "medium"
+    },
+    {
+      "id": "scheduling_wait",
+      "name": "scheduling wait",
+      "start": "2026-11-27T02:41:50Z",
+      "end": "2026-11-27T02:42:11Z",
+      "secs": 21,
+      "source": "status",
+      "confidence": "high"
+    },
+    {
+      "id": "image_pull",
+      "name": "image pull",
+      "start": "2026-11-27T02:42:11Z",
+      "end": "2026-11-27T02:44:09Z",
+      "secs": 118,
+      "source": "event",
+      "confidence": "high",
+      "attrs": {
+        "cached": false,
+        "image": "vllm/vllm-openai:v0.30.0",
+        "image_bytes": 11200000000
+      }
+    },
+    {
+      "id": "init_containers",
+      "name": "init containers",
+      "start": "2026-11-27T02:44:09Z",
+      "end": "2026-11-27T02:47:00Z",
+      "secs": 171,
+      "source": "status",
+      "confidence": "high",
+      "attrs": {
+        "container": "weights",
+        "remote_download": true
+      }
+    },
+    {
+      "id": "framework_bootstrap",
+      "name": "framework bootstrap",
+      "start": "2026-11-27T02:47:00Z",
+      "end": "2026-11-27T02:47:09Z",
+      "secs": 9,
+      "source": "log",
+      "confidence": "high"
+    },
+    {
+      "id": "weights_download",
+      "name": "weights download",
+      "start": "2026-11-27T02:47:09Z",
+      "end": "2026-11-27T02:49:31Z",
+      "secs": 142,
+      "source": "log",
+      "confidence": "high"
+    },
+    {
+      "id": "weights_load",
+      "name": "weights load",
+      "start": "2026-11-27T02:49:31Z",
+      "end": "2026-11-27T02:50:00Z",
+      "secs": 29,
+      "source": "log",
+      "confidence": "high",
+      "attrs": {
+        "engine_reported_secs": 29,
+        "storage": ""
+      }
+    },
+    {
+      "id": "torch_compile",
+      "name": "torch.compile",
+      "start": "2026-11-27T02:50:00Z",
+      "end": "2026-11-27T02:50:53Z",
+      "secs": 53,
+      "source": "log",
+      "confidence": "high",
+      "attrs": {
+        "cache": "miss",
+        "engine_reported_secs": 53
+      }
+    },
+    {
+      "id": "cuda_graph",
+      "name": "CUDA graph capture",
+      "start": "2026-11-27T02:50:53Z",
+      "end": "2026-11-27T02:51:14Z",
+      "secs": 21,
+      "source": "log",
+      "confidence": "high",
+      "attrs": {
+        "engine_reported_secs": 21
+      }
+    },
+    {
+      "id": "kv_cache_warmup",
+      "name": "KV cache / warmup",
+      "start": "2026-11-27T02:51:14Z",
+      "end": "2026-11-27T02:51:26Z",
+      "secs": 12,
+      "source": "log",
+      "confidence": "medium"
+    },
+    {
+      "id": "api_server_up",
+      "name": "API server up",
+      "start": "2026-11-27T02:51:26Z",
+      "end": "2026-11-27T02:51:50Z",
+      "secs": 24,
+      "source": "log",
+      "confidence": "high"
+    },
+    {
+      "id": "readiness_lag",
+      "name": "readiness lag",
+      "start": "2026-11-27T02:51:50Z",
+      "end": "2026-11-27T02:52:14Z",
+      "secs": 24,
+      "source": "log+status",
+      "confidence": "high",
+      "attrs": {
+        "probe_period_secs": 30
+      }
+    }
+  ],
+  "attempts": [
+    {
+      "index": 0,
+      "outcome": "ready",
+      "start": "2026-11-27T02:41:09Z",
+      "end": "2026-11-27T02:52:14Z",
+      "phases": [
+        {
+          "id": "scheduling_wait",
+          "name": "scheduling wait",
+          "start": "2026-11-27T02:41:09Z",
+          "end": "2026-11-27T02:41:14Z",
+          "secs": 5,
+          "source": "status",
+          "confidence": "high"
+        },
+        {
+          "id": "node_provisioning",
+          "name": "↳ node provisioning",
+          "parentId": "scheduling_wait",
+          "start": "2026-11-27T02:41:14Z",
+          "end": "2026-11-27T02:41:50Z",
+          "secs": 36,
+          "source": "event+node",
+          "confidence": "medium"
+        },
+        {
+          "id": "scheduling_wait",
+          "name": "scheduling wait",
+          "start": "2026-11-27T02:41:50Z",
+          "end": "2026-11-27T02:42:11Z",
+          "secs": 21,
+          "source": "status",
+          "confidence": "high"
+        },
+        {
+          "id": "image_pull",
+          "name": "image pull",
+          "start": "2026-11-27T02:42:11Z",
+          "end": "2026-11-27T02:44:09Z",
+          "secs": 118,
+          "source": "event",
+          "confidence": "high",
+          "attrs": {
+            "cached": false,
+            "image": "vllm/vllm-openai:v0.30.0",
+            "image_bytes": 11200000000
+          }
+        },
+        {
+          "id": "init_containers",
+          "name": "init containers",
+          "start": "2026-11-27T02:44:09Z",
+          "end": "2026-11-27T02:47:00Z",
+          "secs": 171,
+          "source": "status",
+          "confidence": "high",
+          "attrs": {
+            "container": "weights",
+            "remote_download": true
+          }
+        },
+        {
+          "id": "framework_bootstrap",
+          "name": "framework bootstrap",
+          "start": "2026-11-27T02:47:00Z",
+          "end": "2026-11-27T02:47:09Z",
+          "secs": 9,
+          "source": "log",
+          "confidence": "high"
+        },
+        {
+          "id": "weights_download",
+          "name": "weights download",
+          "start": "2026-11-27T02:47:09Z",
+          "end": "2026-11-27T02:49:31Z",
+          "secs": 142,
+          "source": "log",
+          "confidence": "high"
+        },
+        {
+          "id": "weights_load",
+          "name": "weights load",
+          "start": "2026-11-27T02:49:31Z",
+          "end": "2026-11-27T02:50:00Z",
+          "secs": 29,
+          "source": "log",
+          "confidence": "high",
+          "attrs": {
+            "engine_reported_secs": 29,
+            "storage": ""
+          }
+        },
+        {
+          "id": "torch_compile",
+          "name": "torch.compile",
+          "start": "2026-11-27T02:50:00Z",
+          "end": "2026-11-27T02:50:53Z",
+          "secs": 53,
+          "source": "log",
+          "confidence": "high",
+          "attrs": {
+            "cache": "miss",
+            "engine_reported_secs": 53
+          }
+        },
+        {
+          "id": "cuda_graph",
+          "name": "CUDA graph capture",
+          "start": "2026-11-27T02:50:53Z",
+          "end": "2026-11-27T02:51:14Z",
+          "secs": 21,
+          "source": "log",
+          "confidence": "high",
+          "attrs": {
+            "engine_reported_secs": 21
+          }
+        },
+        {
+          "id": "kv_cache_warmup",
+          "name": "KV cache / warmup",
+          "start": "2026-11-27T02:51:14Z",
+          "end": "2026-11-27T02:51:26Z",
+          "secs": 12,
+          "source": "log",
+          "confidence": "medium"
+        },
+        {
+          "id": "api_server_up",
+          "name": "API server up",
+          "start": "2026-11-27T02:51:26Z",
+          "end": "2026-11-27T02:51:50Z",
+          "secs": 24,
+          "source": "log",
+          "confidence": "high"
+        },
+        {
+          "id": "readiness_lag",
+          "name": "readiness lag",
+          "start": "2026-11-27T02:51:50Z",
+          "end": "2026-11-27T02:52:14Z",
+          "secs": 24,
+          "source": "log+status",
+          "confidence": "high",
+          "attrs": {
+            "probe_period_secs": 30
+          }
+        }
+      ]
+    }
+  ],
+  "unattributedSecs": 0,
+  "findings": [
+    {
+      "phase": "weights_download",
+      "observedSecs": 313,
+      "condition": "weights downloaded from a remote hub during startup",
+      "recommendation": "Weights were fetched from a remote hub during startup. Pre-stage them to a PVC or node-local NVMe, or use OCI image volumes/streaming loaders.",
+      "recoverableSecs": 313,
+      "confidence": "high",
+      "text": "weights download 313.0s: Weights were fetched from a remote hub during startup. Pre-stage them to a PVC or node-local NVMe, or use OCI image volumes/streaming loaders."
+    },
+    {
+      "phase": "torch_compile",
+      "observedSecs": 53,
+      "condition": "large compile phase and latency-tolerant workload",
+      "recommendation": "Compilation is large. Consider eager mode if throughput trade-offs are acceptable; this removes compilation but can reduce serving throughput.",
+      "recoverableSecs": 53,
+      "confidence": "low",
+      "text": "torch.compile 53.0s: Compilation is large. Consider eager mode if throughput trade-offs are acceptable; this removes compilation but can reduce serving throughput."
+    },
+    {
+      "phase": "torch_compile",
+      "observedSecs": 53,
+      "condition": "compile cache miss",
+      "recommendation": "Compile cache miss. Persist the vLLM compile cache directory on a volume shared across restarts.",
+      "recoverableSecs": 37.1,
+      "confidence": "high",
+      "text": "torch.compile 53.0s: Compile cache miss. Persist the vLLM compile cache directory on a volume shared across restarts."
+    },
+    {
+      "phase": "cuda_graph",
+      "observedSecs": 21,
+      "condition": "CUDA graph capture exceeds 20 seconds",
+      "recommendation": "CUDA graph capture is large. Reduce the number of captured batch sizes or use a smaller capture-size set.",
+      "recoverableSecs": 6.3,
+      "confidence": "low",
+      "text": "CUDA graph capture 21.0s: CUDA graph capture is large. Reduce the number of captured batch sizes or use a smaller capture-size set."
+    }
+  ],
+  "warnings": null,
+  "rulePack": {
+    "engine": "vllm",
+    "version": "\u003e=0.11,\u003c0.40",
+    "path": "embedded/vllm/ge0.11-lt0.40.yaml"
+  },
+  "capturedAt": "2026-11-27T02:52:14Z"
+}

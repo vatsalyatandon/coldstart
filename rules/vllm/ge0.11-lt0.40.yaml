@@ -1,0 +1,57 @@
+engine: vllm
+versions: ">=0.11,<0.40"
+detect:
+  - 'vLLM API server version (?P<version>\S+)'
+  - 'Initializing a V1 LLM engine'
+  - 'Starting vLLM (?:API )?server'
+  - 'vLLM worker.*version (?P<version>\S+)'
+phases:
+  weights_download:
+    start: '(?i)(Downloading|Fetching|snapshot_download|hf_hub_download|Loading checkpoint shards)'
+    end: '(?i)(Loading weights(?:\.\.\.| \(|$)|Load weight start)'
+  weights_load:
+    start: '(?i)(Loading weights(?:\.\.\.| \(|$)|Load weight start)'
+    end: 'Loading weights took (?P<secs>[\d.]+) seconds'
+    duration_from: secs
+  torch_compile:
+    start: '(?i)(torch\.compile(?:\.\.\.| \(|$)|Compiling|Directly load the compiled graph|load the compiled graph)'
+    end: 'torch\.compile takes [^0-9]*(?P<secs>[\d.]+)\s*s'
+    duration_from: secs
+  cuda_graph:
+    start: '(?i)(Graph capturing(?:\.\.\.| \(|:|$)|Capturing CUDA graphs)'
+    end: 'Graph capturing finished in (?P<secs>[\d.]+) secs'
+    duration_from: secs
+  engine_init:
+    end: 'init engine .* took (?P<secs>[\d.]+) seconds'
+    duration_from: secs
+  server_ready:
+    end: '(?i)(Application startup complete|Starting vLLM (?:API )?server|Uvicorn running)'
+flags:
+  compile_cache_hit: '(?i)(load the compiled graph|from the cache)'
+  compile_cache_miss: '(?i)(cache miss|compiling.*cache)'
+  weights_remote_download: '(?i)(huggingface\.co|hf_hub_download|snapshot_download|Downloading.*(?:safetensors|model)|Fetching.*(?:safetensors|model))'
+  eager_mode_available: '(?i)(enforce_eager|--enforce-eager)'
+  oom: '(?i)(out of memory|OOMKilled|CUDA out of memory)'
+attrs:
+  weights_bytes:
+    pattern: 'Model loading took (?P<value>[\d.]+) GiB'
+    multiplier: 1073741824
+recommendations:
+  compile_cache_miss:
+    text: 'Compile cache miss. Persist the vLLM compile cache directory on a volume shared across restarts.'
+    confidence: high
+  compile_large_eager:
+    text: 'Compilation is large. Consider eager mode if throughput trade-offs are acceptable; this removes compilation but can reduce serving throughput.'
+    confidence: low
+  cuda_graph_large:
+    text: 'CUDA graph capture is large. Reduce the number of captured batch sizes or use a smaller capture-size set.'
+    confidence: low
+  weights_remote_download:
+    text: 'Weights were fetched from a remote hub during startup. Pre-stage them to a PVC or node-local NVMe, or use OCI image volumes/streaming loaders.'
+    confidence: high
+  weights_load_slow:
+    text: 'Weight-load throughput is below the storage reference. Check network PV versus local NVMe, prefer safetensors, and evaluate a streaming loader.'
+    confidence: medium
+  oom:
+    text: 'The engine failed with an out-of-memory error. Reduce KV-cache or model memory settings before retrying startup.'
+    confidence: high

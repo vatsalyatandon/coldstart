@@ -1,0 +1,25 @@
+archives:
+  - id: coldstart
+    formats: [tar.gz]
+    name_template: "coldstart_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
+checksum:
+  name_template: checksums.txt
+builds:
+  - id: kubectl-coldstart
+    main: ./cmd/coldstart
+    binary: kubectl-coldstart
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+    goos: [darwin, linux]
+    goarch: [arm64, amd64]
+release:
+  github:
+    owner: vatsalyatandon
+    name: coldstart
