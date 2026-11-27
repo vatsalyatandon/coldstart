@@ -1,0 +1,25 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# Select a concrete large-model repository before applying this component.
+patches:
+  - target:
+      kind: Deployment
+      name: inference-server
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: inference-server
+      spec:
+        template:
+          spec:
+            containers:
+              - name: inference
+                args:
+                  - --model
+                  - REPLACE_ME_LARGE_MODEL_ID
+                  - --host
+                  - 0.0.0.0
+                  - --port
+                  - "8000"

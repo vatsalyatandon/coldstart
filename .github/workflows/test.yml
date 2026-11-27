@@ -13,6 +13,7 @@ jobs:
       - run: go mod download
       - run: go test -race ./...
       - run: go vet ./...
+      - run: bash -n scripts/capture/capture.sh
       - uses: golangci/golangci-lint-action@v6
         with:
           version: v1.64.8
