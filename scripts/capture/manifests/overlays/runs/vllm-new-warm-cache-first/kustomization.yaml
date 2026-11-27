@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# First warm-cache run: populate the retained PVC (expected cache miss).
+resources:
+  - ../../../bases/vllm
+
+components:
+  - ../../../components/versions/vllm-new-replace-me
+  - ../../../components/node/warm-node
+  - ../../../components/vllm/compile-cache-pvc
+
+commonAnnotations:
+  coldstart.sh/capture-run: vllm-new-warm-cache-miss
+  coldstart.sh/cache-expectation: miss

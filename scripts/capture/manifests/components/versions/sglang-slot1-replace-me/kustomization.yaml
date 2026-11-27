@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# Replace the tag with the first selected SGLang release.
+# The version is intentionally unknown; do not apply this component as-is.
+patches:
+  - target:
+      kind: Deployment
+      name: inference-server
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: inference-server
+      spec:
+        template:
+          spec:
+            containers:
+              - name: inference
+                image: lmsysorg/sglang:REPLACE_ME_SGLANG_SLOT1_TAG

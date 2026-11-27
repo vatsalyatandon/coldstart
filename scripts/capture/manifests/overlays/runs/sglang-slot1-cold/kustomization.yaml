@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../../bases/sglang
+
+components:
+  - ../../../components/versions/sglang-slot1-replace-me
+  - ../../../components/node/cold-node
+
+commonAnnotations:
+  coldstart.sh/capture-run: sglang-slot1-cold

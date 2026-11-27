@@ -111,7 +111,59 @@ func TestCustomPackOverridesEmbeddedConstraint(t *testing.T) {
 	}
 }
 
-func TestTensorParallelUsesSlowestReportedDuration(t *testing.T) {
+func TestEveryShippedRegexHasEvidenceComment(t *testing.T) {
+	err := filepath.WalkDir(filepath.Join("..", "..", "rules"), func(path string, entry os.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if entry.IsDir() || (!strings.HasSuffix(path, ".yaml") && !strings.HasSuffix(path, ".yml")) {
+			return nil
+		}
+		data, err := os.ReadFile(path) // #nosec G304 -- the rule-pack root is fixed relative to this test.
+		if err != nil {
+			return err
+		}
+		lines := strings.Split(string(data), "\n")
+		section := ""
+		for i, line := range lines {
+			trimmed := strings.TrimSpace(line)
+			if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+				continue
+			}
+			indent := len(line) - len(strings.TrimLeft(line, " \t"))
+			if indent == 0 && strings.HasSuffix(trimmed, ":") {
+				section = strings.TrimSuffix(trimmed, ":")
+				continue
+			}
+			isRegex := strings.HasPrefix(trimmed, "start:") || strings.HasPrefix(trimmed, "end:") || strings.HasPrefix(trimmed, "pattern:")
+			isRegex = isRegex || (section == "detect" && strings.HasPrefix(trimmed, "- '"))
+			isRegex = isRegex || (section == "flags" && indent == 2 && strings.Contains(trimmed, ": '"))
+			if !isRegex {
+				continue
+			}
+			context := line
+			for j := i - 1; j >= 0; j-- {
+				previous := strings.TrimSpace(lines[j])
+				if previous == "" {
+					break
+				}
+				if !strings.HasPrefix(previous, "#") {
+					break
+				}
+				context += "\n" + previous
+			}
+			if !strings.Contains(context, "# src:") && !strings.Contains(context, "# UNVERIFIED") {
+				t.Errorf("%s:%d regex has no evidence comment: %s", path, i+1, trimmed)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestTensorParallelUsesFirstMarkers(t *testing.T) {
 	packs, err := Load("")
 	if err != nil {
 		t.Fatal(err)
@@ -123,7 +175,66 @@ func TestTensorParallelUsesSlowestReportedDuration(t *testing.T) {
 	}
 	selection, _ := Select(packs, Detection{Engine: "vllm", Version: "0.30.0"})
 	matched := Match(lines, selection.Pack)
-	if got := *matched.Phases["weights_load"].ReportedSecs; got != 7.10 {
-		t.Fatalf("got %v, want slowest worker 7.10", got)
+	if got := *matched.Phases["weights_load"].ReportedSecs; got != 5.71 {
+		t.Fatalf("got %v, want first worker marker 5.71", got)
+	}
+}
+
+func TestRepeatedGraphMarkersUseFirstStartAndFirstEnd(t *testing.T) {
+	packs, err := Load("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	base := time.Date(2026, 11, 27, 2, 41, 9, 0, time.UTC)
+	lines := []model.LogLine{
+		{Timestamp: base.Add(10 * time.Second), Text: "Graph capturing finished in 10 secs"},
+		{Timestamp: base.Add(6 * time.Second), Text: "Graph capturing"},
+		{Timestamp: base.Add(5 * time.Second), Text: "Graph capturing finished in 5 secs"},
+		{Timestamp: base, Text: "Graph capturing"},
+	}
+	selection, _ := Select(packs, Detection{Engine: "vllm", Version: "0.30.0"})
+	matched := Match(lines, selection.Pack)
+	phase := matched.Phases["cuda_graph"]
+	if phase.Start == nil || !phase.Start.Equal(base) || phase.End == nil || !phase.End.Equal(base.Add(5*time.Second)) || *phase.ReportedSecs != 5 {
+		t.Fatalf("phase = %+v, want first start/end pair", phase)
+	}
+}
+
+func TestRiskyLinesDoNotMatchDownloadOrCompile(t *testing.T) {
+	packs, err := Load("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	selection, _ := Select(packs, Detection{Engine: "vllm", Version: "0.30.0"})
+	lines := []model.LogLine{
+		{Timestamp: time.Unix(1, 0), Text: "Fetching tokenizer config from https://huggingface.co/Qwen/test"},
+		{Timestamp: time.Unix(2, 0), Text: "Loading safetensors checkpoint shards: 50%"},
+		{Timestamp: time.Unix(3, 0), Text: `127.0.0.1 - "POST /v1/completions" 200 Compiling`},
+		{Timestamp: time.Unix(4, 0), Text: "Loading weights took 1.00 seconds"},
+	}
+	matched := Match(lines, selection.Pack)
+	if matched.Flags["weights_remote_download"] {
+		t.Fatal("tokenizer-only HF fetch was classified as a remote weights download")
+	}
+	if _, ok := matched.Phases["weights_download"]; ok {
+		t.Fatal("tokenizer/load-progress lines were classified as weights download")
+	}
+	if _, ok := matched.Phases["torch_compile"]; ok {
+		t.Fatal("request log containing Compiling was classified as torch.compile")
+	}
+	if matched.Phases["weights_load"].Start == nil {
+		t.Fatal("checkpoint-shard progress was not retained as a load-start signal")
+	}
+}
+
+func TestStartingServerIsDetectionOnly(t *testing.T) {
+	packs, err := Load("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	selection, _ := Select(packs, Detection{Engine: "vllm", Version: "0.30.0"})
+	matched := Match([]model.LogLine{{Timestamp: time.Unix(1, 0), Text: "Starting vLLM API server on http://0.0.0.0:8000"}}, selection.Pack)
+	if _, ok := matched.Phases["server_ready"]; ok {
+		t.Fatal("Starting vLLM server was incorrectly treated as readiness")
 	}
 }

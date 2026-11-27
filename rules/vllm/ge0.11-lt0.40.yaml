@@ -1,39 +1,56 @@
 engine: vllm
 versions: ">=0.11,<0.40"
 detect:
-  - 'vLLM API server version (?P<version>\S+)'
-  - 'Initializing a V1 LLM engine'
-  - 'Starting vLLM (?:API )?server'
-  - 'vLLM worker.*version (?P<version>\S+)'
+  - 'vLLM API server version (?P<version>\S+)' # UNVERIFIED: confirm the emitting source during capture C.
+  - 'Initializing a V1 LLM engine' # src: vllm v0.11.0 vllm/v1/engine/core.py
+  - 'Starting vLLM (?:API )?server' # UNVERIFIED: detection only; never used as readiness.
+  - 'vLLM worker.*version (?P<version>\S+)' # UNVERIFIED: confirm the emitting source during capture C.
 phases:
   weights_download:
-    start: '(?i)(Downloading|Fetching|snapshot_download|hf_hub_download|Loading checkpoint shards)'
+    # UNVERIFIED: requires snapshot/hf download evidence, a weight-file extension plus a verb, or byte progress.
+    start: '(?i)(snapshot_download|hf_hub_download|(?:download(?:ing|ed)?|fetch(?:ing|ed)?)[^\n]{0,160}(?:\.safetensors|\.bin)\b|(?:downloaded|downloading|fetching|fetched)[^\n]{0,80}[0-9]+(?:\.[0-9]+)?\s*(?:GB|GiB|MB|MiB))'
+    # UNVERIFIED: load-start boundary; checkpoint-shard progress is deliberately excluded.
     end: '(?i)(Loading weights(?:\.\.\.| \(|$)|Load weight start)'
   weights_load:
-    start: '(?i)(Loading weights(?:\.\.\.| \(|$)|Load weight start)'
+    # UNVERIFIED: explicit start markers are inconsistent across versions; checkpoint shards are load progress.
+    start: '(?i)(Loading weights(?:\.\.\.| \(|$)|Load weight start|Loading safetensors checkpoint shards)'
+    # src: vllm v0.11.0 vllm/model_executor/model_loader/default_loader.py
     end: 'Loading weights took (?P<secs>[\d.]+) seconds'
     duration_from: secs
   torch_compile:
-    start: '(?i)(torch\.compile(?:\.\.\.| \(|$)|Compiling|Directly load the compiled graph|load the compiled graph)'
+    # UNVERIFIED: generic Compiling removed; capture C must confirm the real compile prefix.
+    start: '(?i)(torch\.compile(?:\.\.\.| \(|$)|Directly load the compiled graph|load the compiled graph)'
+    # src: vllm v0.11.0 vllm/compilation/monitor.py
     end: 'torch\.compile takes [^0-9]*(?P<secs>[\d.]+)\s*s'
     duration_from: secs
   cuda_graph:
+    # UNVERIFIED: capture C must confirm the start/progress prefix.
     start: '(?i)(Graph capturing(?:\.\.\.| \(|:|$)|Capturing CUDA graphs)'
+    # src: vllm v0.11.0 vllm/v1/worker/gpu_model_runner.py
     end: 'Graph capturing finished in (?P<secs>[\d.]+) secs'
     duration_from: secs
   engine_init:
+    # src: vllm v0.11.0 vllm/v1/engine/core.py
     end: 'init engine .* took (?P<secs>[\d.]+) seconds'
     duration_from: secs
   server_ready:
-    end: '(?i)(Application startup complete|Starting vLLM (?:API )?server|Uvicorn running)'
+    # UNVERIFIED: readiness must be confirmed in capture C; Starting vLLM is detection-only.
+    end: '(?i)(Application startup complete|Uvicorn running)'
 flags:
+  # UNVERIFIED: pin to real cache-hit/miss pairs in capture C.
   compile_cache_hit: '(?i)(load the compiled graph|from the cache)'
-  compile_cache_miss: '(?i)(cache miss|compiling.*cache)'
-  weights_remote_download: '(?i)(huggingface\.co|hf_hub_download|snapshot_download|Downloading.*(?:safetensors|model)|Fetching.*(?:safetensors|model))'
+  # UNVERIFIED: compiling.*cache removed because it can also match cache hits.
+  compile_cache_miss: '(?i)cache miss'
+  # UNVERIFIED: requires a weight-file extension plus a download/fetch verb, or byte progress.
+  # Informed by vllm v0.11.0 vllm/model_executor/model_loader/default_loader.py weight patterns.
+  weights_remote_download: '(?i)(?:download(?:ing|ed)?|fetch(?:ing|ed)?)[^\n]{0,160}(?:\.safetensors|\.bin)\b|(?:\.safetensors|\.bin)\b[^\n]{0,160}(?:download(?:ing|ed)?|fetch(?:ing|ed)?)|(?:downloaded|downloading|fetching|fetched)[^\n]{0,80}[0-9]+(?:\.[0-9]+)?\s*(?:GB|GiB|MB|MiB)'
+  # UNVERIFIED: flag-name recommendation only; no phase boundary depends on this.
   eager_mode_available: '(?i)(enforce_eager|--enforce-eager)'
+  # UNVERIFIED: diagnostic text only.
   oom: '(?i)(out of memory|OOMKilled|CUDA out of memory)'
 attrs:
   weights_bytes:
+    # src: vllm v0.11.0 vllm/v1/worker/gpu_model_runner.py
     pattern: 'Model loading took (?P<value>[\d.]+) GiB'
     multiplier: 1073741824
 recommendations:

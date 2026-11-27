@@ -221,7 +221,7 @@ func coldVLLMBundle() model.Bundle {
 	bundle.Pod.Status.ContainerStatuses[0].State.Running.StartedAt = metav1.NewTime(fixtureT0.Add(351 * time.Second))
 	bundle.Logs = []model.LogCapture{{Container: "engine", Lines: []model.LogLine{
 		at(351, "vLLM API server version 0.30.0"),
-		at(360, "Downloading model shards from huggingface.co"),
+		at(360, "Downloading model-00001-of-00002.safetensors from huggingface.co"),
 		at(502, "Loading weights"),
 		at(531, "Loading weights took 29 seconds"),
 		at(531, "torch.compile cache miss; Compiling"),

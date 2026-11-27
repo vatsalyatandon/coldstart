@@ -1,0 +1,44 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# The downloader image must provide huggingface-cli. Its reference is
+# deliberately a placeholder so no downloader implementation is assumed.
+patches:
+  - target:
+      kind: Deployment
+      name: inference-server
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: inference-server
+      spec:
+        template:
+          spec:
+            initContainers:
+              - name: download-model
+                image: REPLACE_ME_MODEL_DOWNLOADER_IMAGE:REPLACE_ME_MODEL_DOWNLOADER_TAG
+                imagePullPolicy: Always
+                command:
+                  - /bin/sh
+                  - -ec
+                args:
+                  - huggingface-cli download Qwen/Qwen2.5-7B-Instruct --local-dir /models/qwen-7b
+                volumeMounts:
+                  - name: model-download
+                    mountPath: /models
+            containers:
+              - name: inference
+                args:
+                  - --model
+                  - /models/qwen-7b
+                  - --host
+                  - 0.0.0.0
+                  - --port
+                  - "8000"
+                volumeMounts:
+                  - name: model-download
+                    mountPath: /models
+            volumes:
+              - name: model-download
+                emptyDir: {}

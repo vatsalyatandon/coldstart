@@ -1,0 +1,30 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - pvc.yaml
+
+patches:
+  - target:
+      kind: Deployment
+      name: inference-server
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: inference-server
+      spec:
+        template:
+          spec:
+            containers:
+              - name: inference
+                env:
+                  - name: VLLM_CACHE_ROOT
+                    value: /root/.cache/vllm
+                volumeMounts:
+                  - name: compile-cache
+                    mountPath: /root/.cache/vllm
+            volumes:
+              - name: compile-cache
+                persistentVolumeClaim:
+                  claimName: compile-cache

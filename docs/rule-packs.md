@@ -25,28 +25,36 @@ filename is descriptive; selection uses the constraint, not the filename.
 engine: vllm
 versions: ">=0.11,<0.40"
 detect:
-  - 'vLLM API server version (?P<version>\S+)'
-  - 'Initializing a V1 LLM engine'
+  - 'vLLM API server version (?P<version>\S+)' # UNVERIFIED: confirm during capture C.
+  - 'Initializing a V1 LLM engine' # src: vllm v0.11.0 vllm/v1/engine/core.py
 
 phases:
   weights_load:
+    # UNVERIFIED: explicit start marker.
     start: '(?i)Loading weights(?:\.\.\.| \(|$)'
+    # src: vllm v0.11.0 vllm/model_executor/model_loader/default_loader.py
     end: 'Loading weights took (?P<secs>[\d.]+) seconds'
     duration_from: secs
   torch_compile:
-    start: '(?i)Compiling'
+    # UNVERIFIED: generic Compiling is intentionally not used.
+    start: '(?i)torch\.compile(?:\.\.\.| \(|$)'
+    # src: vllm v0.11.0 vllm/compilation/monitor.py
     end: 'torch\.compile takes [^0-9]*(?P<secs>[\d.]+)\s*s'
     duration_from: secs
   server_ready:
-    end: '(?i)Application startup complete'
+    # UNVERIFIED: Starting vLLM is detection-only, not readiness.
+    end: '(?i)(Application startup complete|Uvicorn running)'
 
 flags:
-  compile_cache_hit: '(?i)load the compiled graph|from the cache'
+  # UNVERIFIED: pin to real hit/miss pairs during capture C.
+  compile_cache_hit: '(?i)(load the compiled graph|from the cache)'
   compile_cache_miss: '(?i)cache miss'
-  weights_remote_download: '(?i)huggingface\.co|hf_hub_download'
+  # UNVERIFIED: weight-file evidence is required; bare huggingface.co is not enough.
+  weights_remote_download: '(?i)(?:download(?:ing|ed)?|fetch(?:ing|ed)?)[^\n]{0,160}(?:\.safetensors|\.bin)\b'
 
 attrs:
   weights_bytes:
+    # src: vllm v0.11.0 vllm/v1/worker/gpu_model_runner.py
     pattern: 'Model loading took (?P<value>[\d.]+) GiB'
     multiplier: 1073741824
 
@@ -59,24 +67,41 @@ recommendations:
 Patterns use Go's RE2 syntax. Look-ahead and backreferences are not supported.
 Named capture groups use `(?P<name>...)`.
 
+### Evidence comments
+
+Every shipped regex must have an adjacent comment containing either:
+
+- `# src: <engine> <tag> <source-file>` for a marker verified in tagged source; or
+- `# UNVERIFIED: ...` with the assumption that capture C must confirm.
+
+A pattern without evidence is not release-ready. Public issue snippets are
+useful leads, but real captured log file and line references are preferred once
+available.
+
 ### Detection
 
 At least one `detect` expression is required. A named `version` group is
 preferred. If logs are unavailable, coldstart falls back to container name,
-image, and command metadata.
+image, and command metadata. Automatic engine selection only considers main
+containers; init-container logs can supply flags such as remote weight download
+evidence, but never P4–P11 boundaries.
 
 ### Phases
 
 Each phase needs a `start`, an `end`, or both.
 
-- If a start marker exists, its timestamp is used.
+- Timestamped lines are sorted before matching; malformed lines with no
+  timestamp cannot define a phase boundary.
+- The **first** matching start marker wins.
+- The **first** matching end marker at or after that start wins. End markers
+  before the selected start are ignored.
 - If an end rule captures an engine-reported duration and `duration_from`
   names that group, the duration is retained and used to derive the start when
   no explicit start marker exists.
 - End-only rules without a duration are point markers, such as
   `server_ready`.
-- When several tensor-parallel workers report the same phase, the largest
-  reported duration wins.
+- Repeated tensor-parallel markers follow the same first-start/first-end rule;
+  they do not select the largest reported worker duration.
 - `duration_from` also accepts a `name2` named group as a convenience for
   alternative end expressions.
 

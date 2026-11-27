@@ -1,36 +1,54 @@
 engine: sglang
 versions: ">=0.4"
 detect:
-  - '(?i)SGLang.*version (?P<version>\S+)'
+  - '(?i)SGLang.*version (?P<version>\S+)' # UNVERIFIED: confirm the emitting source during capture C.
+  # src: sglang v0.4.0 python/sglang/srt/server.py for ready clause; other clauses UNVERIFIED.
   - '(?i)(SGLangEngine|SGLang server|Launching SGLang|The server is fired up and ready to roll)'
 phases:
   weights_download:
-    start: '(?i)(Downloading|Fetching|snapshot_download|hf_hub_download|Loading checkpoint shards)'
+    # UNVERIFIED: requires snapshot/hf download evidence, a weight-file extension plus a verb, or byte progress.
+    start: '(?i)(snapshot_download|hf_hub_download|(?:download(?:ing|ed)?|fetch(?:ing|ed)?)[^\n]{0,160}(?:\.safetensors|\.bin)\b|(?:downloaded|downloading|fetching|fetched)[^\n]{0,80}[0-9]+(?:\.[0-9]+)?\s*(?:GB|GiB|MB|MiB))'
+    # UNVERIFIED: load-start boundary; checkpoint-shard progress is deliberately excluded.
     end: '(?i)(Load weight start|Loading weights(?:\.\.\.| \(|$))'
   weights_load:
-    start: '(?i)(Load weight start|Loading weights(?:\.\.\.| \(|$))'
+    # UNVERIFIED: explicit start markers are inconsistent across versions.
+    start: '(?i)(Load weight start|Loading weights(?:\.\.\.| \(|$)|Loading safetensors checkpoint shards)'
+    # UNVERIFIED: v0.4.0 DefaultModelLoader does not emit this duration marker.
     end: '(?i)(Load weight end\. elapsed=(?P<secs>[\d.]+) s|Loading weights took (?P<secs2>[\d.]+) seconds)'
     duration_from: secs
   torch_compile:
+    # UNVERIFIED: capture C must confirm SGLang compile prefixes.
     start: '(?i)(torch\.compile(?:\.\.\.| \(|$)|Compiling|compile graph)'
-    end: '(?i)(torch\.compile takes [*\s]*(?P<secs>[\d.]+) s|Compilation finished in (?P<secs2>[\d.]+) s)'
+    # UNVERIFIED: capture C must confirm the end marker.
+    end: '(?i)(torch\.compile takes [^0-9]*(?P<secs>[\d.]+)\s*s|Compilation finished in (?P<secs2>[\d.]+) s)'
     duration_from: secs
   cuda_graph:
+    # UNVERIFIED: capture C must confirm the start/progress prefix.
     start: '(?i)(Capture cuda graph start|Capturing CUDA graphs|Capture cuda graph(?:\.\.\.| \(|:|$))'
+    # UNVERIFIED: scheduler.py at v0.4.0 did not expose this exact end line.
     end: 'Capture cuda graph end\. Time elapsed: (?P<secs>[\d.]+) s'
     duration_from: secs
   engine_init:
+    # src: sglang v0.4.0 python/sglang/srt/managers/scheduler.py for max_total_num_tokens clause; alternative UNVERIFIED.
     end: '(?i)(max_total_num_tokens=.*|Engine initialization .* took (?P<secs>[\d.]+))'
   server_ready:
+    # src: sglang v0.4.0 python/sglang/srt/server.py for ready clause; Application/Uvicorn clauses UNVERIFIED.
     end: '(?i)(The server is fired up and ready to roll|Application startup complete|Uvicorn running)'
 flags:
+  # UNVERIFIED: pin to real cache-hit/miss pairs in capture C.
   compile_cache_hit: '(?i)(load.*cache|cache hit)'
-  compile_cache_miss: '(?i)(cache miss|compiling.*cache)'
-  weights_remote_download: '(?i)(huggingface\.co|hf_hub_download|snapshot_download|Downloading.*(?:safetensors|model)|Fetching.*(?:safetensors|model))'
+  # UNVERIFIED: compiling.*cache removed because it can also match cache hits.
+  compile_cache_miss: '(?i)cache miss'
+  # UNVERIFIED: requires a weight-file extension plus a download/fetch verb, or byte progress.
+  # Informed by sglang v0.4.0 python/sglang/srt/model_loader/loader.py weight patterns.
+  weights_remote_download: '(?i)(?:download(?:ing|ed)?|fetch(?:ing|ed)?)[^\n]{0,160}(?:\.safetensors|\.bin)\b|(?:\.safetensors|\.bin)\b[^\n]{0,160}(?:download(?:ing|ed)?|fetch(?:ing|ed)?)|(?:downloaded|downloading|fetching|fetched)[^\n]{0,80}[0-9]+(?:\.[0-9]+)?\s*(?:GB|GiB|MB|MiB)'
+  # UNVERIFIED: flag-name recommendation only; no phase boundary depends on this.
   eager_mode_available: '(?i)(disable_cuda_graph|disable-cuda-graph)'
+  # UNVERIFIED: diagnostic text only.
   oom: '(?i)(out of memory|OOMKilled|CUDA out of memory)'
 attrs:
   weights_bytes:
+    # UNVERIFIED: v0.4.0 loader did not emit this exact memory marker.
     pattern: 'Load weight end\. elapsed=[\d.]+ s.*mem usage=(?P<value>[\d.]+) GB'
     multiplier: 1000000000
 recommendations:
